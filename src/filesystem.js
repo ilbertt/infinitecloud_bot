@@ -1,7 +1,12 @@
 import * as fs from 'fs';
 import fetch from 'node-fetch';
 import { Markup } from 'telegraf';
-import { fileActionPrefix, parentDirInlineButton, thisDirAction } from './constants.js';
+import {
+    deleteInlineButton,
+    fileActionPrefix,
+    parentDirInlineButton,
+    thisDirAction,
+} from './constants.js';
 
 //const fileSystemMessage = 'FILESYSTEM - DO NOT DELETE, EDIT OR UNPIN THIS MESSAGE\n';
 const FILESYSTEM_INIT = {
@@ -17,6 +22,9 @@ const FILESYSTEM_INIT = {
             '.': [],
         },
         Music: {
+            '.': [],
+        },
+        Trash: {
             '.': [],
         },
     },
@@ -85,42 +93,70 @@ const getDirectory = (fileSystem, path) => {
     return currentDirectory;
 };
 
-export const getElementsInPath = (fileSystem, path, hideCurrentDirectory, showFiles) => {
+export const getElementsInPath = (
+    fileSystem,
+    path,
+    hideCurrentDirectory,
+    showFiles
+) => {
     path = path ? path : '/';
     const currentDirectory = getDirectory(fileSystem, path);
-    const directories = [];
+    const elements = [];
     if (!hideCurrentDirectory) {
-        directories.push({
+        elements.push({
             name: 'HERE',
             action: thisDirAction,
         });
     }
-    const elements = Object.keys(currentDirectory);
-    for (const element of elements) {
-        if (element !== '.') {
-            const isDirectory = !!currentDirectory[element]['.'];
-            directories.push({
-                name: isDirectory ? '📁'+element : element,
-                action: isDirectory ? element : fileActionPrefix+currentDirectory[element],
+    const directories = Object.keys(currentDirectory);
+    for (const dir of directories) {
+        if (dir !== '.') {
+            elements.push({
+                name: '📁' + dir,
+                // action format:
+                // DIRECTORY: directory name
+                action: dir,
             });
         }
     }
-    return directories;
+    if (showFiles) {
+        const files = currentDirectory['.'];
+        for (const f of files) {
+            elements.push({
+                name: f.name,
+                // action format:
+                // FILE: '/'+messageId+'/'+filename
+                action: fileActionPrefix + f.messageId + fileActionPrefix + f.name,
+            });
+        }
+    }
+    return elements;
 };
 
 export const getKeyboardDirectories = async (
     ctx,
     currentPath,
     hideCurrentDirectory = false,
-    showFiles = false
+    showFiles = false,
+    showDeleteDirButton = false
 ) => {
     const fileSystem = await getFileSystem(ctx);
     const inlineKeyboardButtons = [];
     if (currentPath !== '/') {
         inlineKeyboardButtons.push([parentDirInlineButton]);
+        if (showDeleteDirButton) {
+            inlineKeyboardButtons.push([deleteInlineButton]);
+        }
     }
-    for (const element of getElementsInPath(fileSystem, currentPath, hideCurrentDirectory, showFiles)) {
-        inlineKeyboardButtons.push([Markup.button.callback(element.name, element.action)])
+    for (const element of getElementsInPath(
+        fileSystem,
+        currentPath,
+        hideCurrentDirectory,
+        showFiles
+    )) {
+        inlineKeyboardButtons.push([
+            Markup.button.callback(element.name, element.action),
+        ]);
     }
     return inlineKeyboardButtons;
 };
@@ -145,6 +181,31 @@ export const mkdir = async (ctx, targetPath, directoryName) => {
 export const saveFile = async (ctx, path, fileName, messageId) => {
     const fileSystem = await getFileSystem(ctx);
     const targetDirectory = getDirectory(fileSystem, path);
-    targetDirectory[fileName] = messageId;
+    targetDirectory['.'].push({
+        name: fileName,
+        messageId,
+        createdAt: new Date().getTime(),
+    });
+    await storeFileSystem(ctx, fileSystem);
+};
+
+export const deleteDirectory = async (ctx, path, directoryName) => {
+    const fileSystem = await getFileSystem(ctx);
+    const targetDirectory = getDirectory(fileSystem, path);
+    const directoryContent = targetDirectory[directoryName];
+    fileSystem['/']['Trash'][directoryName] = directoryContent;
+    delete targetDirectory[directoryName];
+    console.log(fileSystem, fileSystem['/']['Trash']);
+    await storeFileSystem(ctx, fileSystem);
+};
+
+export const deleteFile = async (ctx, path, fileName) => {
+    const fileSystem = await getFileSystem(ctx);
+    const targetDirectory = getDirectory(fileSystem, path);
+    const fileContent = targetDirectory['.'].find(f => f.name === fileName);
+    if (fileContent) {
+        fileSystem['/']['Trash']['.'].push(fileContent);
+    }
+    targetDirectory['.'] = targetDirectory['.'].filter(f => f.name !== fileName);
     await storeFileSystem(ctx, fileSystem);
 };

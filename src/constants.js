@@ -6,11 +6,14 @@ export const parentDirAction = '..';
 export const mkdirAction = 'mkdir';
 export const cancelAction = 'cancel';
 export const backAction = 'back';
+export const deleteAction = 'delete';
 export const SAVE_FILE_ACTION = 'save-file-action';
 export const MKDIR_ACTION = 'mkdir-action';
 export const WAIT_DIRECTORY_NAME = 'wait-directory-name';
 export const WAIT_FILE_NAME = 'wait-file-name';
 export const EXPLORER_ACTION = 'explorer-action';
+export const DELETE_DIR_ACTION = 'delete-dir-action';
+export const DELETE_FILE_ACTION = 'delete-file-action';
 export const fileActionPrefix = '/';
 
 /* SYSTEM MESSAGES */
@@ -19,6 +22,8 @@ export const saveFileMessage = 'SAVE FILE:\n';
 export const createDirMessage = 'CREATE DIRECTORY:\n';
 export const askDirectoryNameMessage = 'Input DIRECTORY name:\n';
 export const askFileNameMessage = 'Input FILE name:\n';
+export const deleteDirMessage = 'DELETE DIRECTORY:\n';
+export const deleteFileMessage = 'DELETE FILE:\n';
 
 /* INLINE BUTTONS */
 export const mkdirInlineButton = Markup.button.callback(
@@ -32,3 +37,4 @@ export const cancelOperationInlineButton = Markup.button.callback(
     cancelAction
 );
 export const backInlineButton = Markup.button.callback('<< Back', backAction);
+export const deleteInlineButton = Markup.button.callback('🗑️ DELETE THIS DIR', deleteAction);
