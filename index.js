@@ -35,8 +35,6 @@ const bot = new Telegraf(process.env.BOT_TOKEN);
 // bot.use(Telegraf.log());
 bot.use(new LocalSession({ storage: LocalSession.storageMemory }).middleware());
 
-bot.telegram.getFileLink()
-
 bot.start(async (ctx) => {
     let msg = 'Hello!\nWelcome on *Infinite Cloud*';
     const userFirstName = ctx.from.first_name;
