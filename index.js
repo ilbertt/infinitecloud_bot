@@ -35,6 +35,8 @@ const bot = new Telegraf(process.env.BOT_TOKEN);
 // bot.use(Telegraf.log());
 bot.use(new LocalSession({ storage: LocalSession.storageMemory }).middleware());
 
+bot.telegram.getFileLink()
+
 bot.start(async (ctx) => {
     let msg = 'Hello!\nWelcome on *Infinite Cloud*';
     const userFirstName = ctx.from.first_name;
@@ -129,6 +131,16 @@ bot.command('delete_file', async (ctx) => {
         }
     );
     return;
+});
+bot.command('filesystem', async (ctx) => {
+    const chat = await ctx.getChat();
+    const fileSystemMessage = chat.pinned_message;
+    if (fileSystemMessage) {
+        return ctx.replyWithMarkdown(`Chat id: \`${chat.id}\`\nFilesystem id: \`${fileSystemMessage.message_id}\``, {
+            reply_to_message_id: fileSystemMessage.message_id,
+        });
+    }
+    return ctx.reply(constants.fileSystemNotFound);
 });
 bot.action(constants.thisDirAction, async (ctx) => {
     const currentPath = helpers.getCurrentPath(ctx);

@@ -25,6 +25,8 @@ export const askFileNameMessage = 'Input FILE name:\n';
 export const deleteDirMessage = 'DELETE DIRECTORY:\n';
 export const deleteFileMessage = 'DELETE FILE:\n';
 
+export const fileSystemNotFound = 'Filesystem not found';
+
 /* INLINE BUTTONS */
 export const mkdirInlineButton = Markup.button.callback(
     '+ New Directory',
