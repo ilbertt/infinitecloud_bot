@@ -7,30 +7,6 @@ import * as constants from './src/constants.js';
 import * as helpers from './src/helpers.js';
 dotenv.config();
 
-const fileHandler = async (ctx, fileType) => {
-    console.log('handling file of type:', fileType);
-    const currentPath = helpers.getCurrentPath(ctx);
-    ctx.session.action = constants.SAVE_FILE_ACTION;
-    ctx.session.saveFileData = {
-        messageId: ctx.message.message_id,
-        extension: await helpers.getFileExtension(ctx, fileType),
-    };
-    const inlineKeyboardButtons = await filesystem.getKeyboardDirectories(
-        ctx,
-        currentPath
-    );
-    ctx.replyWithMarkdown(
-        `${constants.saveFileMessage}${constants.currentPathMessage}\`/\``,
-        {
-            parse_mode: 'Markdown',
-            reply_markup: {
-                ...Markup.inlineKeyboard(inlineKeyboardButtons).reply_markup,
-            },
-        }
-    );
-    return;
-};
-
 const bot = new Telegraf(process.env.BOT_TOKEN);
 // bot.use(Telegraf.log());
 bot.use(new LocalSession({ storage: LocalSession.storageMemory }).middleware());
@@ -42,25 +18,39 @@ bot.start(async (ctx) => {
         msg = `Hello ${userFirstName}!\nWelcome on *Infinite Cloud*`;
     }
     ctx.replyWithMarkdown(msg);
-    return await filesystem.initializeFileSystem(ctx);
+    const fileSys= new filesystem.FileSystem();
+    return await fileSys.initializeFileSystem(ctx);
 });
+
+bot.hears('hi', async (ctx) => {
+    const fileSys= await filesystem.getFileSystem(ctx);
+    console.log(fileSys);
+});
+
 bot.help((ctx) => ctx.reply('Help message'));
 bot.on('photo', async (ctx) => {
-    return await fileHandler(ctx, 'photo');
-});
-bot.on('document', async (ctx) => {
-    return await fileHandler(ctx, 'document');
-});
-bot.on('video', async (ctx) => {
-    return await fileHandler(ctx, 'video');
+    const fileSys= await filesystem.getFileSystem(ctx);
+    ctx.session.action = constants.SAVE_FILE_ACTION;
+    ctx.session.saveFileData = {
+        messageId: ctx.message.message_id,
+        extension: '.jpg',
+    };
+    const inlineKeyboardButtons = fileSys.getKeyboardDirectories(ctx);
+    // inlineKeyboardButtons.push(mkdirInlineButton);
+    ctx.replyWithMarkdown(`${constants.saveFileMessage}${constants.currentPathMessage}\`/\``, {
+        parse_mode: 'Markdown',
+        reply_markup: {
+            ...Markup.inlineKeyboard(inlineKeyboardButtons).reply_markup,
+        },
+    });
+    return;
 });
 bot.command('mkdir', async (ctx) => {
-    const currentPath = helpers.getCurrentPath(ctx);
+    const fileSys= await filesystem.getFileSystem(ctx);
+    console.log(fileSys);
     ctx.session.action = constants.MKDIR_ACTION;
-    const inlineKeyboardButtons = await filesystem.getKeyboardDirectories(
-        ctx,
-        currentPath
-    );
+    const inlineKeyboardButtons = fileSys.getKeyboardDirectories(ctx);
+    const currentPath =fileSys.getPath();
     return ctx.reply(
         `${constants.createDirMessage}${constants.currentPathMessage}\`${currentPath}\``,
         {
@@ -72,16 +62,12 @@ bot.command('mkdir', async (ctx) => {
     );
 });
 bot.command('explorer', async (ctx) => {
-    const currentPath = helpers.getCurrentPath(ctx);
+    const fileSys= await filesystem.getFileSystem(ctx);
+    const currentPath= fileSys.getPath();
     ctx.session.action = constants.EXPLORER_ACTION;
-    const inlineKeyboardButtons = await filesystem.getKeyboardDirectories(
-        ctx,
-        currentPath,
-        true,
-        true
-    );
+    const inlineKeyboardButtons = fileSys.getKeyboardDirectories(ctx, true, true);
     // inlineKeyboardButtons.push(mkdirInlineButton);
-    ctx.replyWithMarkdown(`${constants.currentPathMessage}\`/\``, {
+    ctx.replyWithMarkdown(`${constants.currentPathMessage}\`${currentPath}\``, {
         parse_mode: 'Markdown',
         reply_markup: {
             ...Markup.inlineKeyboard(inlineKeyboardButtons).reply_markup,
@@ -89,59 +75,9 @@ bot.command('explorer', async (ctx) => {
     });
     return;
 });
-bot.command('delete_dir', async (ctx) => {
-    const currentPath = helpers.getCurrentPath(ctx);
-    ctx.session.action = constants.DELETE_DIR_ACTION;
-    const inlineKeyboardButtons = await filesystem.getKeyboardDirectories(
-        ctx,
-        currentPath,
-        true,
-        true,
-        true
-    );
-    ctx.replyWithMarkdown(
-        `${constants.deleteDirMessage}${constants.currentPathMessage}\`/\``,
-        {
-            parse_mode: 'Markdown',
-            reply_markup: {
-                ...Markup.inlineKeyboard(inlineKeyboardButtons).reply_markup,
-            },
-        }
-    );
-    return;
-});
-bot.command('delete_file', async (ctx) => {
-    const currentPath = helpers.getCurrentPath(ctx);
-    ctx.session.action = constants.DELETE_FILE_ACTION;
-    const inlineKeyboardButtons = await filesystem.getKeyboardDirectories(
-        ctx,
-        currentPath,
-        true,
-        true
-    );
-    ctx.replyWithMarkdown(
-        `${constants.deleteFileMessage}${constants.currentPathMessage}\`/\``,
-        {
-            parse_mode: 'Markdown',
-            reply_markup: {
-                ...Markup.inlineKeyboard(inlineKeyboardButtons).reply_markup,
-            },
-        }
-    );
-    return;
-});
-bot.command('filesystem', async (ctx) => {
-    const chat = await ctx.getChat();
-    const fileSystemMessage = chat.pinned_message;
-    if (fileSystemMessage) {
-        return ctx.replyWithMarkdown(`Chat id: \`${chat.id}\`\nFilesystem id: \`${fileSystemMessage.message_id}\``, {
-            reply_to_message_id: fileSystemMessage.message_id,
-        });
-    }
-    return ctx.reply(constants.fileSystemNotFound);
-});
 bot.action(constants.thisDirAction, async (ctx) => {
-    const currentPath = helpers.getCurrentPath(ctx);
+    const fileSys= await filesystem.getFileSystem(ctx);
+    const currentPath = fileSys.getPath();
     const action = ctx.session.action;
     let message;
     if (action === constants.MKDIR_ACTION) {
@@ -156,24 +92,19 @@ bot.action(constants.thisDirAction, async (ctx) => {
         {
             parse_mode: 'Markdown',
             reply_markup: {
-                ...Markup.inlineKeyboard([constants.backInlineButton])
-                    .reply_markup,
+                ...Markup.inlineKeyboard([constants.backInlineButton]).reply_markup,
                 force_reply: true,
             },
         }
     );
 });
 bot.action(constants.parentDirAction, async (ctx) => {
-    const currentPath = helpers.getCurrentPath(ctx);
+    const fileSys= await filesystem.getFileSystem(ctx);
+
     const action = ctx.session.action;
-    const newCurrentPath = filesystem.getParentDirectoryPath(currentPath);
-    helpers.setCurrentPath(ctx, newCurrentPath);
-    const inlineKeyboardButtons = await filesystem.getKeyboardDirectories(
-        ctx,
-        newCurrentPath,
-        action === constants.EXPLORER_ACTION,
-        action === constants.EXPLORER_ACTION
-    );
+    fileSys.navigate("..");
+    const newCurrentPath = fileSys.getPath();
+    const inlineKeyboardButtons = fileSys.getKeyboardDirectories();
 
     let message = '';
     if (action === constants.MKDIR_ACTION) {
@@ -193,12 +124,10 @@ bot.action(constants.parentDirAction, async (ctx) => {
     );
 });
 bot.action(constants.backAction, async (ctx) => {
+    const fileSys= await filesystem.getFileSystem(ctx);
     const action = ctx.session.action;
-    const currentPath = helpers.getCurrentPath(ctx);
-    const inlineKeyboardButtons = await filesystem.getKeyboardDirectories(
-        ctx,
-        currentPath
-    );
+    const currentPath = fileSys.getPath();
+    const inlineKeyboardButtons = fileSys.getKeyboardDirectories();
 
     let message = '';
     if (action === constants.MKDIR_ACTION) {
@@ -219,33 +148,13 @@ bot.action(constants.backAction, async (ctx) => {
         }
     );
 });
-bot.action(constants.deleteAction, async (ctx) => {
-    const currentPath = helpers.getCurrentPath(ctx); // format /parentDir/.../childDir/currentDir/
-    const directoryName = currentPath.split('/').slice(0, -1).pop();
-    const targetPath = currentPath.split(directoryName + '/')[0];
-
-    console.log(targetPath, directoryName);
-    await filesystem.deleteDirectory(ctx, targetPath, directoryName);
-    ctx.session.action = null;
-    ctx.session.currentPath = null;
-    return ctx.replyWithMarkdown(
-        `Directory *${directoryName}* at \`${targetPath}\` DELETED`
-    );
-});
 bot.action(/^(.?$|[^\/].+)/, async (ctx) => {
-    const action = ctx.session.action;
-    const currentPath = helpers.getCurrentPath(ctx);
+    const fileSys= await filesystem.getFileSystem(ctx);
     const directory = ctx.callbackQuery.data;
-    const newCurrentPath = currentPath + directory + '/';
-    helpers.setCurrentPath(ctx, newCurrentPath);
-    const inlineKeyboardButtons = await filesystem.getKeyboardDirectories(
-        ctx,
-        newCurrentPath,
-        action === constants.EXPLORER_ACTION ||
-            action === constants.DELETE_DIR_ACTION,
-        action === constants.EXPLORER_ACTION || action === constants.DELETE_FILE_ACTION,
-        action === constants.DELETE_DIR_ACTION
-    );
+    const action = ctx.session.action;
+    fileSys.navigate(directory);
+    const newCurrentPath = fileSys.getPath();
+    const inlineKeyboardButtons = fileSys.getKeyboardDirectories(action === constants.EXPLORER_ACTION);
 
     let message = '';
     if (action === constants.MKDIR_ACTION) {
@@ -265,24 +174,14 @@ bot.action(/^(.?$|[^\/].+)/, async (ctx) => {
     );
 });
 bot.action(/^\//, async (ctx) => {
-    const fileName = ctx.callbackQuery.data.split('/')[2];
-    const action = ctx.session.action;
-    const currentPath = helpers.getCurrentPath(ctx);
-    if (action === constants.DELETE_FILE_ACTION) {
-        await filesystem.deleteFile(ctx, currentPath, fileName);
-        ctx.session.action = null;
-        ctx.session.currentPath = null;
-        return ctx.replyWithMarkdown(
-            `File *${fileName}* at \`${currentPath}\` DELETED`
-        );
-    }
-    const fileMessageId = ctx.callbackQuery.data.split('/')[1];
+    const fileMessageId = ctx.callbackQuery.data.substring(1);
     return await ctx.telegram.sendMessage(ctx.chat.id, 'requested file', {
         reply_to_message_id: fileMessageId,
     });
 });
 bot.on('text', async (ctx) => {
-    const currentPath = helpers.getCurrentPath(ctx);
+    const fileSys= await filesystem.getFileSystem(ctx);
+    const currentPath =fileSys.getPath();
     const waitReply = ctx.session.waitReply;
     const reply = ctx.message.text;
 
@@ -291,19 +190,18 @@ bot.on('text', async (ctx) => {
         const saveFileData = ctx.session.saveFileData;
         const messageId = saveFileData.messageId;
         const fileExtension = saveFileData.extension;
-        const fileName = reply + fileExtension;
-        await filesystem.saveFile(ctx, currentPath, fileName, messageId);
+        await fileSys.saveFile(ctx, reply+fileExtension, messageId);
         ctx.session.saveFileData = null;
-        message = `File *${fileName}* saved at \`${currentPath}\``;
+        message = `File *${reply}* saved at \`${currentPath}\``;
     } else if (waitReply === constants.WAIT_DIRECTORY_NAME) {
-        await filesystem.mkdir(ctx, currentPath, reply);
+        await fileSys.mkdir(ctx, reply);
         message = `Directory *${reply}* created at \`${currentPath}\``;
     }
     ctx.replyWithMarkdown(message);
-    helpers.setCurrentPath(ctx, '/');
     ctx.session.waitReply = null;
     ctx.session.action = null;
-    ctx.session.currentPath = null;
+    fileSys.resetPath();
+    //ctx.unpinChatMessage()
     return;
 });
 bot.launch();

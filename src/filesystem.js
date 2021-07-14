@@ -1,12 +1,8 @@
+import { constants } from 'buffer';
 import * as fs from 'fs';
 import fetch from 'node-fetch';
 import { Markup } from 'telegraf';
-import {
-    deleteInlineButton,
-    fileActionPrefix,
-    parentDirInlineButton,
-    thisDirAction,
-} from './constants.js';
+import { fileActionPrefix, parentDirInlineButton, thisDirAction } from './constants.js';
 
 //const fileSystemMessage = 'FILESYSTEM - DO NOT DELETE, EDIT OR UNPIN THIS MESSAGE\n';
 const FILESYSTEM_INIT = {
@@ -24,11 +20,150 @@ const FILESYSTEM_INIT = {
         Music: {
             '.': [],
         },
-        Trash: {
-            '.': [],
-        },
     },
 };
+
+export class FileSystem{
+    #fileSystem;
+    #path;
+    constructor(){
+        this.#fileSystem=FILESYSTEM_INIT;
+        this.#path='/';
+    }
+
+    getFileSystem(){
+        return this.#fileSystem;
+    }
+    
+    setFileSystem(fileSys){
+        this.#fileSystem=fileSys;
+    }
+
+    getDirectory(){
+        const currentPathPieces = this.#path.split('/')
+        currentPathPieces.shift();   // remove first element because it's always: ''
+        let currentDirectory = this.#fileSystem['/'];
+        if(this.#path==='/')
+            return currentDirectory;
+        for (const piece of currentPathPieces) {
+            currentDirectory = currentDirectory[piece];
+        }
+        return currentDirectory;
+    }
+
+    getDirectories() {
+        const currentDirectory = this.getDirectory();
+        const directories = [];
+        for (const dir in currentDirectory) {
+            directories.push(dir);
+        }
+        return directories;
+    }
+
+    async mkdir(ctx, directoryName) {
+        const targetDirectory = this.getDirectory();
+        targetDirectory[directoryName] = {'.': []};
+        await this.storeFileSystem(ctx);
+    }
+
+    navigate(dir) {
+        if (dir == '..'){
+            const Path=this.#path.split('/');
+            if (Path.length<3){
+                this.#path="/"
+            } else {
+            Path.pop()
+            this.#path=Path.join("/");
+            }
+        } else {
+            if(this.#path!=='/')
+                this.#path+="/";
+
+            this.#path+=dir;
+        }
+    }
+
+    setPath(Path){
+        this.#path= Path ? Path : '/';;
+    }
+
+    getPath(){
+        return this.#path;
+    }
+
+    resetPath() {
+        this.#path="/";
+    }
+
+    async storeFileSystem(ctx) {
+        ctx.session.filesystem = this;
+        const id= await ctx.chat.id;
+        fs.writeFileSync('filesystem'+id+'.json', JSON.stringify(this.#fileSystem));
+        const rootMessage = await ctx.replyWithDocument({
+            source: './filesystem'+id+'.json',
+        });
+        fs.unlinkSync('filesystem'+id+'.json');
+        await unpinOldFilesystem(ctx);
+        await ctx.pinChatMessage(rootMessage.message_id, {
+            disable_notification: true,
+        });
+    };
+
+    async initializeFileSystem (ctx){
+        this.#fileSystem=FILESYSTEM_INIT;
+        await this.storeFileSystem(ctx);
+    };
+
+    async saveFile(ctx, fileName, messageId){
+        const targetDirectory = this.getDirectory();
+        targetDirectory[fileName] = messageId;
+        await this.storeFileSystem(ctx);
+    };
+
+    getParentDirectoryPath(){
+        const pieces = this.#path.split('/').filter((piece) => piece !== '');
+        pieces.pop();
+        if (pieces.length === 0) {
+            // we reached the root directory
+            return '/';
+        }
+        return '/' + pieces.join('/') + '/';
+    };
+
+    getElementsInPath ( hideCurrentDirectory, showFiles){
+        const currentDirectory = this.getDirectory();
+        const directories = [];
+        if (!hideCurrentDirectory) {
+            directories.push({
+                name: 'HERE',
+                action: thisDirAction,
+            });
+        }
+        const elements = Object.keys(currentDirectory);
+        for (const element of elements) {
+            if (element !== '.') {
+                const isDirectory = !!currentDirectory[element]['.'];
+                directories.push({
+                    name: isDirectory ? '📁'+element : element,
+                    action: isDirectory ? element : fileActionPrefix+currentDirectory[element],
+                });
+            }
+        }
+        return directories;
+    };
+    
+    getKeyboardDirectories(hideCurrentDirectory = false, showFiles = false){
+        const inlineKeyboardButtons = [];
+        if (this.#path !== '/') {
+            inlineKeyboardButtons.push([parentDirInlineButton]);
+        }
+        for (const element of this.getElementsInPath(hideCurrentDirectory, showFiles)) {
+            inlineKeyboardButtons.push([Markup.button.callback(element.name, element.action)])
+        }
+        return inlineKeyboardButtons;
+    };
+
+}
 
 const fileUrl = (filePath) =>
     `https://api.telegram.org/file/bot${process.env.BOT_TOKEN}/${filePath}`;
@@ -46,11 +181,12 @@ const unpinOldFilesystem = async (ctx) => {
 
 export const storeFileSystem = async (ctx, fileSystem) => {
     ctx.session.filesystem = fileSystem;
-    fs.writeFileSync('filesystem.json', JSON.stringify(fileSystem));
+    const id=ctx.chat.id;
+    fs.writeFileSync('filesystem'+id+'.json', JSON.stringify(fileSystem));
     const rootMessage = await ctx.replyWithDocument({
-        source: './filesystem.json',
+        source: './filesystem'+id+'.json',
     });
-    fs.unlinkSync('filesystem.json');
+    fs.unlinkSync('filesystem'+id+'.json');
     await unpinOldFilesystem(ctx);
     await ctx.pinChatMessage(rootMessage.message_id, {
         disable_notification: true,
@@ -67,15 +203,18 @@ const fetchFileSystemObj = async (ctx, rootMessage) => {
     const fileURL = fileUrl(file.file_path);
     const fileData = await fetch(fileURL);
     const filesystem = await fileData.json();
-    ctx.session.filesystem = filesystem;
-    return filesystem;
+    const fileSys= new FileSystem()
+    fileSys.setFileSystem(filesystem);
+    ctx.session.fileSystem = fileSys;
+    return fileSys;
 };
 
 export const getFileSystem = async (ctx) => {
-    const sessionFilesystem = ctx.session.filesystem;
+    const sessionFilesystem = ctx.session.fileSystem;
     if (!sessionFilesystem) {
         const chat = await ctx.getChat();
         const rootMessage = chat.pinned_message;
+        console.log(rootMessage);
         if (rootMessage) {
             return await fetchFileSystemObj(ctx, rootMessage);
         }
@@ -93,70 +232,42 @@ const getDirectory = (fileSystem, path) => {
     return currentDirectory;
 };
 
-export const getElementsInPath = (
-    fileSystem,
-    path,
-    hideCurrentDirectory,
-    showFiles
-) => {
+export const getElementsInPath = (fileSystem, path, hideCurrentDirectory, showFiles) => {
     path = path ? path : '/';
     const currentDirectory = getDirectory(fileSystem, path);
-    const elements = [];
+    const directories = [];
     if (!hideCurrentDirectory) {
-        elements.push({
+        directories.push({
             name: 'HERE',
             action: thisDirAction,
         });
     }
-    const directories = Object.keys(currentDirectory);
-    for (const dir of directories) {
-        if (dir !== '.') {
-            elements.push({
-                name: '📁' + dir,
-                // action format:
-                // DIRECTORY: directory name
-                action: dir,
+    const elements = Object.keys(currentDirectory);
+    for (const element of elements) {
+        if (element !== '.') {
+            const isDirectory = !!currentDirectory[element]['.'];
+            directories.push({
+                name: isDirectory ? '📁'+element : element,
+                action: isDirectory ? element : fileActionPrefix+currentDirectory[element],
             });
         }
     }
-    if (showFiles) {
-        const files = currentDirectory['.'];
-        for (const f of files) {
-            elements.push({
-                name: f.name,
-                // action format:
-                // FILE: '/'+messageId+'/'+filename
-                action: fileActionPrefix + f.messageId + fileActionPrefix + f.name,
-            });
-        }
-    }
-    return elements;
+    return directories;
 };
 
 export const getKeyboardDirectories = async (
     ctx,
     currentPath,
     hideCurrentDirectory = false,
-    showFiles = false,
-    showDeleteDirButton = false
+    showFiles = false
 ) => {
     const fileSystem = await getFileSystem(ctx);
     const inlineKeyboardButtons = [];
     if (currentPath !== '/') {
         inlineKeyboardButtons.push([parentDirInlineButton]);
-        if (showDeleteDirButton) {
-            inlineKeyboardButtons.push([deleteInlineButton]);
-        }
     }
-    for (const element of getElementsInPath(
-        fileSystem,
-        currentPath,
-        hideCurrentDirectory,
-        showFiles
-    )) {
-        inlineKeyboardButtons.push([
-            Markup.button.callback(element.name, element.action),
-        ]);
+    for (const element of getElementsInPath(fileSystem, currentPath, hideCurrentDirectory, showFiles)) {
+        inlineKeyboardButtons.push([Markup.button.callback(element.name, element.action)])
     }
     return inlineKeyboardButtons;
 };
@@ -181,31 +292,6 @@ export const mkdir = async (ctx, targetPath, directoryName) => {
 export const saveFile = async (ctx, path, fileName, messageId) => {
     const fileSystem = await getFileSystem(ctx);
     const targetDirectory = getDirectory(fileSystem, path);
-    targetDirectory['.'].push({
-        name: fileName,
-        messageId,
-        createdAt: new Date().getTime(),
-    });
-    await storeFileSystem(ctx, fileSystem);
-};
-
-export const deleteDirectory = async (ctx, path, directoryName) => {
-    const fileSystem = await getFileSystem(ctx);
-    const targetDirectory = getDirectory(fileSystem, path);
-    const directoryContent = targetDirectory[directoryName];
-    fileSystem['/']['Trash'][directoryName] = directoryContent;
-    delete targetDirectory[directoryName];
-    console.log(fileSystem, fileSystem['/']['Trash']);
-    await storeFileSystem(ctx, fileSystem);
-};
-
-export const deleteFile = async (ctx, path, fileName) => {
-    const fileSystem = await getFileSystem(ctx);
-    const targetDirectory = getDirectory(fileSystem, path);
-    const fileContent = targetDirectory['.'].find(f => f.name === fileName);
-    if (fileContent) {
-        fileSystem['/']['Trash']['.'].push(fileContent);
-    }
-    targetDirectory['.'] = targetDirectory['.'].filter(f => f.name !== fileName);
+    targetDirectory[fileName] = messageId;
     await storeFileSystem(ctx, fileSystem);
 };
