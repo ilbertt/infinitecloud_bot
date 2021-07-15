@@ -228,3 +228,13 @@ export const renameFile = async (ctx, path, oldFileName, newFilename) => {
     fileContent['name']=newFilename+'.'+fileExtension;
     await storeFileSystem(ctx, fileSystem);
 };
+
+export const moveFile = async (ctx, oldPath, newPath, fileName) => {
+    const fileSystem = await getFileSystem(ctx);
+    const sourceDirectory = getDirectory(fileSystem, oldPath);
+    const targetDirectory = getDirectory(fileSystem, newPath);
+    const fileContent = sourceDirectory['.'].find(f => f.name === fileName);
+    targetDirectory['.'].push(fileContent);
+    sourceDirectory['.'] = sourceDirectory['.'].filter(f => f.name !== fileName);
+    await storeFileSystem(ctx, fileSystem);
+};

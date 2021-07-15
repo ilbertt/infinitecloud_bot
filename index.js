@@ -109,6 +109,25 @@ bot.command('rename_file', async (ctx) => {
     return;
 });
 
+bot.command('move_file', async (ctx) => {
+    const currentPath = helpers.getCurrentPath(ctx);
+    ctx.session.action = constants.SELECT_MOVE_FILE_ACTION;
+    const inlineKeyboardButtons = await filesystem.getKeyboardDirectories(
+        ctx,
+        currentPath,
+        true,
+        true
+    );
+    // inlineKeyboardButtons.push(mkdirInlineButton);
+    ctx.replyWithMarkdown(`${constants.currentPathMessage}\`/\``, {
+        parse_mode: 'Markdown',
+        reply_markup: {
+            ...Markup.inlineKeyboard(inlineKeyboardButtons).reply_markup,
+        },
+    });
+    return;
+});
+
 bot.command('delete_dir', async (ctx) => {
     const currentPath = helpers.getCurrentPath(ctx);
     ctx.session.action = constants.DELETE_DIR_ACTION;
@@ -170,6 +189,17 @@ bot.action(constants.thisDirAction, async (ctx) => {
     } else if (action === constants.SAVE_FILE_ACTION) {
         message = constants.askFileNameMessage;
         ctx.session.waitReply = constants.WAIT_FILE_NAME;
+    } else if (action === constants.MOVE_FILE_ACTION){
+        const sourcePath =ctx.session.old_path;
+        const fileName = ctx.session.file_to_move;
+        filesystem.moveFile(ctx, sourcePath, currentPath, fileName);
+        ctx.session.action=null;
+        ctx.session.file_to_move=null;
+        ctx.session.old_path=null;
+        ctx.session.currentPath = null;
+        return ctx.replyWithMarkdown(
+            `Moved *${fileName}* at \`${currentPath}\` \nfrom *${sourcePath}*`
+        );
     }
     return ctx.editMessageText(
         `${message}${constants.currentPathMessage}\`${currentPath}\``,
@@ -263,10 +293,12 @@ bot.action(/^(.?$|[^\/].+)/, async (ctx) => {
         newCurrentPath,
         action === constants.EXPLORER_ACTION ||
         action === constants.DELETE_DIR_ACTION ||
-        action === constants.RENAME_FILE_ACTION,
+        action === constants.RENAME_FILE_ACTION ||
+        action === constants.SELECT_MOVE_FILE_ACTION,
         action === constants.EXPLORER_ACTION || 
         action === constants.DELETE_FILE_ACTION  || 
-        action === constants.RENAME_FILE_ACTION,
+        action === constants.RENAME_FILE_ACTION ||
+        action === constants.SELECT_MOVE_FILE_ACTION,
         action === constants.DELETE_DIR_ACTION
     );
 
@@ -275,6 +307,8 @@ bot.action(/^(.?$|[^\/].+)/, async (ctx) => {
         message = constants.createDirMessage;
     } else if (action === constants.SAVE_FILE_ACTION) {
         message = constants.saveFileMessage;
+    } else if (action === constants.MOVE_FILE_ACTION) {
+        message = constants.moveFileMessage+ctx.session.file_to_move+"\n";
     }
 
     return ctx.editMessageText(
@@ -306,6 +340,20 @@ bot.action(/^\//, async (ctx) => {
         return ctx.replyWithMarkdown(
             `Rename *${fileName}* at \`${currentPath}\` \nInsert new name:`
         )
+    } else if (action === constants.SELECT_MOVE_FILE_ACTION){
+        ctx.session.file_to_move=fileName;
+        ctx.session.old_path=currentPath;
+        ctx.session.action=constants.MOVE_FILE_ACTION;
+        const message = constants.moveFileMessage+fileName+"\n";
+        const inlineKeyboardButtons = await filesystem.getKeyboardDirectories(ctx, currentPath);
+        return ctx.editMessageText(
+            `${message}${constants.currentPathMessage}\`${currentPath}\``,
+            {
+                parse_mode: 'Markdown',
+                reply_markup: {
+                    ...Markup.inlineKeyboard(inlineKeyboardButtons).reply_markup,
+                },
+            });
     }
     const fileMessageId = ctx.callbackQuery.data.split('/')[1];
     return await ctx.telegram.sendMessage(ctx.chat.id, 'requested file', {
