@@ -14,6 +14,7 @@ export const WAIT_FILE_NAME = 'wait-file-name';
 export const EXPLORER_ACTION = 'explorer-action';
 export const DELETE_DIR_ACTION = 'delete-dir-action';
 export const DELETE_FILE_ACTION = 'delete-file-action';
+export const RENAME_FILE_ACTION = 'rename-file-action';
 export const fileActionPrefix = '/';
 
 /* SYSTEM MESSAGES */

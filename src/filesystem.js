@@ -181,6 +181,15 @@ export const mkdir = async (ctx, targetPath, directoryName) => {
 export const saveFile = async (ctx, path, fileName, messageId) => {
     const fileSystem = await getFileSystem(ctx);
     const targetDirectory = getDirectory(fileSystem, path);
+    for (const file in targetDirectory['.']){
+        if(targetDirectory['.'][file]['name']===fileName){
+            targetDirectory['.'][file]['messageId']=messageId;
+            targetDirectory['.'][file]['createdAt']= new Date().getTime();
+            await storeFileSystem(ctx, fileSystem);
+            return;
+        }
+
+    }
     targetDirectory['.'].push({
         name: fileName,
         messageId,
@@ -207,5 +216,15 @@ export const deleteFile = async (ctx, path, fileName) => {
         fileSystem['/']['Trash']['.'].push(fileContent);
     }
     targetDirectory['.'] = targetDirectory['.'].filter(f => f.name !== fileName);
+    await storeFileSystem(ctx, fileSystem);
+};
+
+export const renameFile = async (ctx, path, oldFileName, newFilename) => {
+    const fileExtension = oldFileName.split('.').pop()
+    const fileSystem = await getFileSystem(ctx);
+    const targetDirectory = getDirectory(fileSystem, path);
+    const fileContent = targetDirectory['.'].find(f => f.name === oldFileName);
+    console.log(fileContent, oldFileName, path);
+    fileContent['name']=newFilename+'.'+fileExtension;
     await storeFileSystem(ctx, fileSystem);
 };

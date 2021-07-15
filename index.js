@@ -89,6 +89,26 @@ bot.command('explorer', async (ctx) => {
     });
     return;
 });
+
+bot.command('rename_file', async (ctx) => {
+    const currentPath = helpers.getCurrentPath(ctx);
+    ctx.session.action = constants.RENAME_FILE_ACTION;
+    const inlineKeyboardButtons = await filesystem.getKeyboardDirectories(
+        ctx,
+        currentPath,
+        true,
+        true
+    );
+    // inlineKeyboardButtons.push(mkdirInlineButton);
+    ctx.replyWithMarkdown(`${constants.currentPathMessage}\`/\``, {
+        parse_mode: 'Markdown',
+        reply_markup: {
+            ...Markup.inlineKeyboard(inlineKeyboardButtons).reply_markup,
+        },
+    });
+    return;
+});
+
 bot.command('delete_dir', async (ctx) => {
     const currentPath = helpers.getCurrentPath(ctx);
     ctx.session.action = constants.DELETE_DIR_ACTION;
@@ -242,8 +262,11 @@ bot.action(/^(.?$|[^\/].+)/, async (ctx) => {
         ctx,
         newCurrentPath,
         action === constants.EXPLORER_ACTION ||
-            action === constants.DELETE_DIR_ACTION,
-        action === constants.EXPLORER_ACTION || action === constants.DELETE_FILE_ACTION,
+        action === constants.DELETE_DIR_ACTION ||
+        action === constants.RENAME_FILE_ACTION,
+        action === constants.EXPLORER_ACTION || 
+        action === constants.DELETE_FILE_ACTION  || 
+        action === constants.RENAME_FILE_ACTION,
         action === constants.DELETE_DIR_ACTION
     );
 
@@ -268,13 +291,21 @@ bot.action(/^\//, async (ctx) => {
     const fileName = ctx.callbackQuery.data.split('/')[2];
     const action = ctx.session.action;
     const currentPath = helpers.getCurrentPath(ctx);
+    console.log(action)
     if (action === constants.DELETE_FILE_ACTION) {
         await filesystem.deleteFile(ctx, currentPath, fileName);
         ctx.session.action = null;
         ctx.session.currentPath = null;
         return ctx.replyWithMarkdown(
             `File *${fileName}* at \`${currentPath}\` DELETED`
-        );
+        )
+    
+    } else if (action === constants.RENAME_FILE_ACTION) {
+        ctx.session.waitReply = constants.WAIT_FILE_NAME;
+        ctx.session.file_to_rename=fileName;
+        return ctx.replyWithMarkdown(
+            `Rename *${fileName}* at \`${currentPath}\` \nInsert new name:`
+        )
     }
     const fileMessageId = ctx.callbackQuery.data.split('/')[1];
     return await ctx.telegram.sendMessage(ctx.chat.id, 'requested file', {
@@ -285,16 +316,24 @@ bot.on('text', async (ctx) => {
     const currentPath = helpers.getCurrentPath(ctx);
     const waitReply = ctx.session.waitReply;
     const reply = ctx.message.text;
+    const action = ctx.session.action;
 
     let message = 'Error';
     if (waitReply === constants.WAIT_FILE_NAME) {
-        const saveFileData = ctx.session.saveFileData;
-        const messageId = saveFileData.messageId;
-        const fileExtension = saveFileData.extension;
-        const fileName = reply + fileExtension;
-        await filesystem.saveFile(ctx, currentPath, fileName, messageId);
-        ctx.session.saveFileData = null;
-        message = `File *${fileName}* saved at \`${currentPath}\``;
+            if (action=== constants.SAVE_FILE_ACTION) {
+            const saveFileData = ctx.session.saveFileData;
+            const messageId = saveFileData.messageId;
+            const fileExtension = saveFileData.extension;
+            const fileName = reply + fileExtension;
+            await filesystem.saveFile(ctx, currentPath, fileName, messageId);
+            ctx.session.saveFileData = null;
+            message = `File *${fileName}* saved at \`${currentPath}\``;
+        } else if (action === constants.RENAME_FILE_ACTION) {
+            const oldFileName=ctx.session.file_to_rename;
+            filesystem.renameFile(ctx, currentPath, oldFileName, reply)
+            ctx.session.file_to_rename=null;
+            message = `File *${oldFileName}* renamed at \`${currentPath}\``
+        }
     } else if (waitReply === constants.WAIT_DIRECTORY_NAME) {
         await filesystem.mkdir(ctx, currentPath, reply);
         message = `Directory *${reply}* created at \`${currentPath}\``;
