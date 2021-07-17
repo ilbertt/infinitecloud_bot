@@ -379,31 +379,32 @@ bot.on('text', async (ctx) => {
     const action = ctx.session.action;
 
     let message = 'Error';
-    if (waitReply === constants.WAIT_FILE_NAME) {
-        if (action === constants.SAVE_FILE_ACTION) {
-            const saveFileData = ctx.session.saveFileData;
-            const messageId = saveFileData.messageId;
-            const fileExtension = saveFileData.extension;
-            const fileName = reply + fileExtension;
-            await filesystem.saveFile(ctx, currentPath, fileName, messageId);
-            ctx.session.saveFileData = null;
-            message = `File *${fileName}* saved at \`${currentPath}\``;
-        } else if (action === constants.RENAME_FILE_ACTION) {
-            const oldFileName = ctx.session.fileToHandle;
-            filesystem.renameFile(ctx, currentPath, oldFileName, reply);
-            ctx.session.fileToHandle = null;
-            const fileExtension = oldFileName.split('.').pop();
-            message = `File *${oldFileName}* renamed.\nNew name: *${reply}.${fileExtension}*\nPath: \`${currentPath}\``;
+    if(waitReply) {
+        if (waitReply === constants.WAIT_FILE_NAME) {
+            if (action === constants.SAVE_FILE_ACTION) {
+                const saveFileData = ctx.session.saveFileData;
+                const messageId = saveFileData.messageId;
+                const fileExtension = saveFileData.extension;
+                const fileName = reply + fileExtension;
+                await filesystem.saveFile(ctx, currentPath, fileName, messageId);
+                ctx.session.saveFileData = null;
+                message = `File *${fileName}* saved at \`${currentPath}\``;
+            } else if (action === constants.RENAME_FILE_ACTION) {
+                const oldFileName = ctx.session.fileToHandle;
+                filesystem.renameFile(ctx, currentPath, oldFileName, reply);
+                ctx.session.fileToHandle = null;
+                const fileExtension = oldFileName.split('.').pop();
+                message = `File *${oldFileName}* renamed.\nNew name: *${reply}.${fileExtension}*\nPath: \`${currentPath}\``;
+            }
+        } else if (waitReply === constants.WAIT_DIRECTORY_NAME) {
+            await filesystem.mkdir(ctx, currentPath, reply);
+            message = `Directory *${reply}* created at \`${currentPath}\``;
         }
-    } else if (waitReply === constants.WAIT_DIRECTORY_NAME) {
-        await filesystem.mkdir(ctx, currentPath, reply);
-        message = `Directory *${reply}* created at \`${currentPath}\``;
+        helpers.setCurrentPath(ctx, '/');
+        ctx.session.waitReply = null;
+        ctx.session.action = null;
     }
     ctx.replyWithMarkdown(message);
-    helpers.setCurrentPath(ctx, '/');
-    ctx.session.waitReply = null;
-    ctx.session.action = null;
-    ctx.session.currentPath = null;
     return;
 });
 bot.launch();
