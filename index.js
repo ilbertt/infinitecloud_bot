@@ -173,14 +173,19 @@ bot.command('filesystem', async (ctx) => {
     const chat = await ctx.getChat();
     const fileSystemMessage = chat.pinned_message;
     if (fileSystemMessage) {
-        return ctx.replyWithMarkdown(`Chat id: \`${chat.id}\`\nFilesystem id: \`${fileSystemMessage.message_id}\``, {
-            reply_to_message_id: fileSystemMessage.message_id,
-        });
+        return ctx.replyWithMarkdown(
+            `Chat id: \`${chat.id}\`\nFilesystem id: \`${fileSystemMessage.message_id}\``,
+            {
+                reply_to_message_id: fileSystemMessage.message_id,
+            }
+        );
     }
     return ctx.reply(constants.fileSystemNotFound);
 });
 bot.command('dashboard', async (ctx) => {
-    return ctx.replyWithMarkdown(`Dashboard available at:\n[${constants.dashboardUrl}](${constants.dashboardUrl})`);
+    return ctx.replyWithMarkdown(
+        `Dashboard available at:\n[${constants.dashboardUrl}](${constants.dashboardUrl})`
+    );
 });
 bot.action(constants.thisDirAction, async (ctx) => {
     const currentPath = helpers.getCurrentPath(ctx);
@@ -192,13 +197,13 @@ bot.action(constants.thisDirAction, async (ctx) => {
     } else if (action === constants.SAVE_FILE_ACTION) {
         message = constants.askFileNameMessage;
         ctx.session.waitReply = constants.WAIT_FILE_NAME;
-    } else if (action === constants.MOVE_FILE_ACTION){
-        const sourcePath =ctx.session.oldPath;
+    } else if (action === constants.MOVE_FILE_ACTION) {
+        const sourcePath = ctx.session.oldPath;
         const fileName = ctx.session.fileToHandle;
         filesystem.moveFile(ctx, sourcePath, currentPath, fileName);
-        ctx.session.action=null;
-        ctx.session.fileToHandle=null;
-        ctx.session.oldPath=null;
+        ctx.session.action = null;
+        ctx.session.fileToHandle = null;
+        ctx.session.oldPath = null;
         ctx.session.currentPath = null;
         return ctx.replyWithMarkdown(
             `Moved *${fileName}*\nfrom \`${sourcePath}\`\nto \`${currentPath}\``
@@ -295,13 +300,13 @@ bot.action(/^(.?$|[^\/].+)/, async (ctx) => {
         ctx,
         newCurrentPath,
         action === constants.EXPLORER_ACTION ||
-        action === constants.DELETE_DIR_ACTION ||
-        action === constants.RENAME_FILE_ACTION ||
-        action === constants.SELECT_MOVE_FILE_ACTION,
-        action === constants.EXPLORER_ACTION || 
-        action === constants.DELETE_FILE_ACTION  || 
-        action === constants.RENAME_FILE_ACTION ||
-        action === constants.SELECT_MOVE_FILE_ACTION,
+            action === constants.DELETE_DIR_ACTION ||
+            action === constants.RENAME_FILE_ACTION ||
+            action === constants.SELECT_MOVE_FILE_ACTION,
+        action === constants.EXPLORER_ACTION ||
+            action === constants.DELETE_FILE_ACTION ||
+            action === constants.RENAME_FILE_ACTION ||
+            action === constants.SELECT_MOVE_FILE_ACTION,
         action === constants.DELETE_DIR_ACTION
     );
 
@@ -311,7 +316,7 @@ bot.action(/^(.?$|[^\/].+)/, async (ctx) => {
     } else if (action === constants.SAVE_FILE_ACTION) {
         message = constants.saveFileMessage;
     } else if (action === constants.MOVE_FILE_ACTION) {
-        message = constants.moveFileMessage+ctx.session.fileToHandle+"\n";
+        message = constants.moveFileMessage + ctx.session.fileToHandle + '\n';
     }
 
     return ctx.editMessageText(
@@ -328,35 +333,39 @@ bot.action(/^\//, async (ctx) => {
     const fileName = ctx.callbackQuery.data.split('/')[2];
     const action = ctx.session.action;
     const currentPath = helpers.getCurrentPath(ctx);
-    console.log(action)
+    console.log(action);
     if (action === constants.DELETE_FILE_ACTION) {
         await filesystem.deleteFile(ctx, currentPath, fileName);
         ctx.session.action = null;
         ctx.session.currentPath = null;
         return ctx.replyWithMarkdown(
             `File *${fileName}* at \`${currentPath}\` DELETED`
-        )
-    
+        );
     } else if (action === constants.RENAME_FILE_ACTION) {
         ctx.session.waitReply = constants.WAIT_FILE_NAME;
-        ctx.session.fileToHandle=fileName;
+        ctx.session.fileToHandle = fileName;
         return ctx.replyWithMarkdown(
             `Rename *${fileName}* at \`${currentPath}\` \nInsert new name:`
-        )
-    } else if (action === constants.SELECT_MOVE_FILE_ACTION){
-        ctx.session.fileToHandle=fileName;
-        ctx.session.oldPath=currentPath;
-        ctx.session.action=constants.MOVE_FILE_ACTION;
-        const message = constants.moveFileMessage+fileName+"\n";
-        const inlineKeyboardButtons = await filesystem.getKeyboardDirectories(ctx, currentPath);
+        );
+    } else if (action === constants.SELECT_MOVE_FILE_ACTION) {
+        ctx.session.fileToHandle = fileName;
+        ctx.session.oldPath = currentPath;
+        ctx.session.action = constants.MOVE_FILE_ACTION;
+        const message = constants.moveFileMessage + fileName + '\n';
+        const inlineKeyboardButtons = await filesystem.getKeyboardDirectories(
+            ctx,
+            currentPath
+        );
         return ctx.editMessageText(
             `${message}${constants.currentPathMessage}\`${currentPath}\``,
             {
                 parse_mode: 'Markdown',
                 reply_markup: {
-                    ...Markup.inlineKeyboard(inlineKeyboardButtons).reply_markup,
+                    ...Markup.inlineKeyboard(inlineKeyboardButtons)
+                        .reply_markup,
                 },
-            });
+            }
+        );
     }
     const fileMessageId = ctx.callbackQuery.data.split('/')[1];
     return await ctx.telegram.sendMessage(ctx.chat.id, 'requested file', {
@@ -371,20 +380,20 @@ bot.on('text', async (ctx) => {
 
     let message = 'Error';
     if (waitReply === constants.WAIT_FILE_NAME) {
-            if (action=== constants.SAVE_FILE_ACTION) {
+        if (action === constants.SAVE_FILE_ACTION) {
             const saveFileData = ctx.session.saveFileData;
             const messageId = saveFileData.messageId;
-            const fileExtension = saveFileData.extension;to
+            const fileExtension = saveFileData.extension;
             const fileName = reply + fileExtension;
             await filesystem.saveFile(ctx, currentPath, fileName, messageId);
             ctx.session.saveFileData = null;
             message = `File *${fileName}* saved at \`${currentPath}\``;
         } else if (action === constants.RENAME_FILE_ACTION) {
-            const oldFileName=ctx.session.fileToHandle;
-            filesystem.renameFile(ctx, currentPath, oldFileName, reply)
-            ctx.session.fileToHandle=null;
-            const fileExtension = oldFileName.split('.').pop()
-            message = `File *${oldFileName}* renamed.\nNew name: *${reply}.${fileExtension}*\nPath: \`${currentPath}\``
+            const oldFileName = ctx.session.fileToHandle;
+            filesystem.renameFile(ctx, currentPath, oldFileName, reply);
+            ctx.session.fileToHandle = null;
+            const fileExtension = oldFileName.split('.').pop();
+            message = `File *${oldFileName}* renamed.\nNew name: *${reply}.${fileExtension}*\nPath: \`${currentPath}\``;
         }
     } else if (waitReply === constants.WAIT_DIRECTORY_NAME) {
         await filesystem.mkdir(ctx, currentPath, reply);
