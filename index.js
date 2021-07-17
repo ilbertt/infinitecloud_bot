@@ -179,6 +179,9 @@ bot.command('filesystem', async (ctx) => {
     }
     return ctx.reply(constants.fileSystemNotFound);
 });
+bot.command('dashboard', async (ctx) => {
+    return ctx.replyWithMarkdown(`Dashboard available at:\n[${constants.dashboardUrl}](${constants.dashboardUrl})`);
+});
 bot.action(constants.thisDirAction, async (ctx) => {
     const currentPath = helpers.getCurrentPath(ctx);
     const action = ctx.session.action;

@@ -1,5 +1,7 @@
 import { Markup } from 'telegraf';
 
+export const dashboardUrl = 'https://infinitecloud-website-api.web.app/';
+
 /* ACTIONS */
 export const thisDirAction = '.';
 export const parentDirAction = '..';
