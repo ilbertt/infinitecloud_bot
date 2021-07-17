@@ -45,12 +45,13 @@ const unpinOldFilesystem = async (ctx) => {
 };
 
 export const storeFileSystem = async (ctx, fileSystem) => {
+    const chatId = ctx.chat.id;
     ctx.session.filesystem = fileSystem;
-    fs.writeFileSync('filesystem.json', JSON.stringify(fileSystem));
+    fs.writeFileSync(`filesystem${chatId}.json`, JSON.stringify(fileSystem));
     const rootMessage = await ctx.replyWithDocument({
-        source: './filesystem.json',
+        source: `./filesystem${chatId}.json`,
     });
-    fs.unlinkSync('filesystem.json');
+    fs.unlinkSync(`filesystem${chatId}.json`);
     await unpinOldFilesystem(ctx);
     await ctx.pinChatMessage(rootMessage.message_id, {
         disable_notification: true,
