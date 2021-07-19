@@ -388,8 +388,8 @@ bot.on('text', async (ctx) => {
 
     let message = 'Error';
     if(waitReply) {
-        if (reply.includes('/')) {
-            message = 'Names cannot include */* character. Retry';
+        if (reply.includes(constants.fileActionPrefix)) {
+            message = `Names cannot include *${constants.fileActionPrefix}* character.\nRetry`;
         } else {
             if (waitReply === constants.WAIT_FILE_NAME) {
                 if (action === constants.SAVE_FILE_ACTION) {
