@@ -282,7 +282,7 @@ bot.action(constants.deleteAction, async (ctx) => {
     const directoryName = currentPath.split('/').slice(0, -1).pop();
     const targetPath = currentPath.split(directoryName + '/')[0];
 
-    console.log(targetPath, directoryName);
+    // console.log(targetPath, directoryName);
     await filesystem.deleteDirectory(ctx, targetPath, directoryName);
     ctx.session.action = null;
     ctx.session.currentPath = null;
@@ -333,7 +333,7 @@ bot.action(/^\//, async (ctx) => {
     const fileName = ctx.callbackQuery.data.split('/')[2];
     const action = ctx.session.action;
     const currentPath = helpers.getCurrentPath(ctx);
-    console.log(action);
+    console.log('File action:', action);
     if (action === constants.DELETE_FILE_ACTION) {
         await filesystem.deleteFile(ctx, currentPath, fileName);
         ctx.session.action = null;

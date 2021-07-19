@@ -36,7 +36,7 @@ const fileUrl = (filePath) =>
 const unpinOldFilesystem = async (ctx) => {
     const chat = await ctx.getChat();
     const rootMessage = chat.pinned_message;
-    console.log(rootMessage);
+    // console.log(rootMessage);
     if (rootMessage) {
         try {
             await ctx.unpinChatMessage(rootMessage.message_id);
@@ -52,7 +52,11 @@ export const storeFileSystem = async (ctx, fileSystem) => {
         source: `./filesystem${chatId}.json`,
     });
     fs.unlinkSync(`filesystem${chatId}.json`);
-    await unpinOldFilesystem(ctx);
+    try {
+        await unpinOldFilesystem(ctx);
+    } catch (err) {
+        console.log(err);
+    }
     await ctx.pinChatMessage(rootMessage.message_id, {
         disable_notification: true,
     });
@@ -205,7 +209,7 @@ export const deleteDirectory = async (ctx, path, directoryName) => {
     const directoryContent = targetDirectory[directoryName];
     fileSystem['/']['Trash'][directoryName] = directoryContent;
     delete targetDirectory[directoryName];
-    console.log(fileSystem, fileSystem['/']['Trash']);
+    // console.log(fileSystem, fileSystem['/']['Trash']);
     await storeFileSystem(ctx, fileSystem);
 };
 
@@ -225,7 +229,7 @@ export const renameFile = async (ctx, path, oldFileName, newFilename) => {
     const fileSystem = await getFileSystem(ctx);
     const targetDirectory = getDirectory(fileSystem, path);
     const fileContent = targetDirectory['.'].find(f => f.name === oldFileName);
-    console.log(fileContent, oldFileName, path);
+    // console.log(fileContent, oldFileName, path);
     fileContent['name']=newFilename+'.'+fileExtension;
     await storeFileSystem(ctx, fileSystem);
 };
