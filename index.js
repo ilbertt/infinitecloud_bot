@@ -368,9 +368,17 @@ bot.action(/^\//, async (ctx) => {
         );
     }
     const fileMessageId = ctx.callbackQuery.data.split('/')[1];
-    return await ctx.telegram.sendMessage(ctx.chat.id, 'requested file', {
-        reply_to_message_id: fileMessageId,
-    });
+    try {
+        if (fileMessageId) {
+            return await ctx.telegram.sendMessage(ctx.chat.id, 'requested file', {
+                reply_to_message_id: fileMessageId,
+            });
+        } else {
+            throw new Error('File message not found');
+        }
+    } catch (err) {
+        return await ctx.reply('Error: ' + err.message);
+    }
 });
 bot.on('text', async (ctx) => {
     const currentPath = helpers.getCurrentPath(ctx);
