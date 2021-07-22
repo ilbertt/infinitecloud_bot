@@ -1,11 +1,9 @@
 import { Telegraf, Markup } from 'telegraf';
 import LocalSession from 'telegraf-session-local';
-import * as dotenv from 'dotenv';
 
 import * as filesystem from './src/filesystem.js';
 import * as constants from './src/constants.js';
 import * as helpers from './src/helpers.js';
-dotenv.config();
 
 const fileHandler = async (ctx, fileType) => {
     console.log('handling file of type:', fileType);
@@ -31,7 +29,7 @@ const fileHandler = async (ctx, fileType) => {
     return;
 };
 
-const bot = new Telegraf(process.env.BOT_TOKEN);
+const bot = new Telegraf('');
 // bot.use(Telegraf.log());
 bot.use(new LocalSession({ storage: LocalSession.storageMemory }).middleware());
 
@@ -418,8 +416,9 @@ bot.on('text', async (ctx) => {
     }
     return await ctx.replyWithMarkdown(message);
 });
-bot.launch();
 
 // Enable graceful stop
 process.once('SIGINT', () => bot.stop('SIGINT'));
 process.once('SIGTERM', () => bot.stop('SIGTERM'));
+
+export default bot;
