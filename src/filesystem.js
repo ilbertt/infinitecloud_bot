@@ -1,5 +1,5 @@
 const fs = require('fs');
-const fetch = require('node-fetch');
+const request = require('request');
 const { Markup } = require('telegraf');
 const {
     deleteInlineButton,
@@ -29,9 +29,6 @@ const FILESYSTEM_INIT = {
         },
     },
 };
-
-const fileUrl = (filePath) =>
-    `https://api.telegram.org/file/bot${process.env.BOT_TOKEN}/${filePath}`;
 
 const unpinOldFilesystem = async (ctx) => {
     const chat = await ctx.getChat();
@@ -68,12 +65,17 @@ const initializeFileSystem = async (ctx) => {
 
 const fetchFileSystemObj = async (ctx, rootMessage) => {
     const fileID = rootMessage.document.file_id;
-    const file = await ctx.telegram.getFile(fileID);
-    const fileURL = fileUrl(file.file_path);
-    const fileData = await fetch(fileURL);
-    const filesystem = await fileData.json();
-    ctx.session.filesystem = filesystem;
-    return filesystem;
+    const fileLink = await ctx.telegram.getFileLink(fileID);
+    return new Promise((resolve, reject) => {
+        request.get(fileLink.href, (error, response, body) => {
+            if (error || response.statusCode !== 200) {
+                reject(error);
+            }
+            const fileSystem = JSON.parse(body);
+            ctx.session.filesystem = fileSystem;
+            resolve(fileSystem);
+        });
+    });
 };
 
 const getFileSystem = async (ctx) => {
@@ -131,7 +133,8 @@ const getElementsInPath = (
                 name: f.name,
                 // action format:
                 // FILE: '/'+messageId+'/'+filename
-                action: fileActionPrefix + f.messageId + fileActionPrefix + f.name,
+                action:
+                    fileActionPrefix + f.messageId + fileActionPrefix + f.name,
             });
         }
     }
@@ -186,14 +189,13 @@ const mkdir = async (ctx, targetPath, directoryName) => {
 const saveFile = async (ctx, path, fileName, messageId) => {
     const fileSystem = await getFileSystem(ctx);
     const targetDirectory = getDirectory(fileSystem, path);
-    for (const file in targetDirectory['.']){
-        if(targetDirectory['.'][file]['name']===fileName){
-            targetDirectory['.'][file]['messageId']=messageId;
-            targetDirectory['.'][file]['createdAt']= new Date().getTime();
+    for (const file in targetDirectory['.']) {
+        if (targetDirectory['.'][file]['name'] === fileName) {
+            targetDirectory['.'][file]['messageId'] = messageId;
+            targetDirectory['.'][file]['createdAt'] = new Date().getTime();
             await storeFileSystem(ctx, fileSystem);
             return;
         }
-
     }
     targetDirectory['.'].push({
         name: fileName,
@@ -216,21 +218,25 @@ const deleteDirectory = async (ctx, path, directoryName) => {
 const deleteFile = async (ctx, path, fileName) => {
     const fileSystem = await getFileSystem(ctx);
     const targetDirectory = getDirectory(fileSystem, path);
-    const fileContent = targetDirectory['.'].find(f => f.name === fileName);
+    const fileContent = targetDirectory['.'].find((f) => f.name === fileName);
     if (fileContent) {
         fileSystem['/']['Trash']['.'].push(fileContent);
     }
-    targetDirectory['.'] = targetDirectory['.'].filter(f => f.name !== fileName);
+    targetDirectory['.'] = targetDirectory['.'].filter(
+        (f) => f.name !== fileName
+    );
     await storeFileSystem(ctx, fileSystem);
 };
 
 const renameFile = async (ctx, path, oldFileName, newFilename) => {
-    const fileExtension = oldFileName.split('.').pop()
+    const fileExtension = oldFileName.split('.').pop();
     const fileSystem = await getFileSystem(ctx);
     const targetDirectory = getDirectory(fileSystem, path);
-    const fileContent = targetDirectory['.'].find(f => f.name === oldFileName);
+    const fileContent = targetDirectory['.'].find(
+        (f) => f.name === oldFileName
+    );
     // console.log(fileContent, oldFileName, path);
-    fileContent['name']=newFilename+'.'+fileExtension;
+    fileContent['name'] = newFilename + '.' + fileExtension;
     await storeFileSystem(ctx, fileSystem);
 };
 
@@ -238,9 +244,11 @@ const moveFile = async (ctx, oldPath, newPath, fileName) => {
     const fileSystem = await getFileSystem(ctx);
     const sourceDirectory = getDirectory(fileSystem, oldPath);
     const targetDirectory = getDirectory(fileSystem, newPath);
-    const fileContent = sourceDirectory['.'].find(f => f.name === fileName);
+    const fileContent = sourceDirectory['.'].find((f) => f.name === fileName);
     targetDirectory['.'].push(fileContent);
-    sourceDirectory['.'] = sourceDirectory['.'].filter(f => f.name !== fileName);
+    sourceDirectory['.'] = sourceDirectory['.'].filter(
+        (f) => f.name !== fileName
+    );
     await storeFileSystem(ctx, fileSystem);
 };
 
