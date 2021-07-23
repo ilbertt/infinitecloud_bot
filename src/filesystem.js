@@ -1,12 +1,12 @@
-import * as fs from 'fs';
-import fetch from 'node-fetch';
-import { Markup } from 'telegraf';
-import {
+const fs = require('fs');
+const fetch = require('node-fetch');
+const { Markup } = require('telegraf');
+const {
     deleteInlineButton,
     fileActionPrefix,
     parentDirInlineButton,
     thisDirAction,
-} from './constants.js';
+} = require('./constants.js');
 
 //const fileSystemMessage = 'FILESYSTEM - DO NOT DELETE, EDIT OR UNPIN THIS MESSAGE\n';
 const FILESYSTEM_INIT = {
@@ -44,7 +44,7 @@ const unpinOldFilesystem = async (ctx) => {
     }
 };
 
-export const storeFileSystem = async (ctx, fileSystem) => {
+const storeFileSystem = async (ctx, fileSystem) => {
     const chatId = ctx.chat.id;
     ctx.session.filesystem = fileSystem;
     fs.writeFileSync(`filesystem${chatId}.json`, JSON.stringify(fileSystem));
@@ -62,7 +62,7 @@ export const storeFileSystem = async (ctx, fileSystem) => {
     });
 };
 
-export const initializeFileSystem = async (ctx) => {
+const initializeFileSystem = async (ctx) => {
     await storeFileSystem(ctx, FILESYSTEM_INIT);
 };
 
@@ -76,7 +76,7 @@ const fetchFileSystemObj = async (ctx, rootMessage) => {
     return filesystem;
 };
 
-export const getFileSystem = async (ctx) => {
+const getFileSystem = async (ctx) => {
     const sessionFilesystem = ctx.session.filesystem;
     if (!sessionFilesystem) {
         const chat = await ctx.getChat();
@@ -98,7 +98,7 @@ const getDirectory = (fileSystem, path) => {
     return currentDirectory;
 };
 
-export const getElementsInPath = (
+const getElementsInPath = (
     fileSystem,
     path,
     hideCurrentDirectory,
@@ -138,7 +138,7 @@ export const getElementsInPath = (
     return elements;
 };
 
-export const getKeyboardDirectories = async (
+const getKeyboardDirectories = async (
     ctx,
     currentPath,
     hideCurrentDirectory = false,
@@ -166,7 +166,7 @@ export const getKeyboardDirectories = async (
     return inlineKeyboardButtons;
 };
 
-export const getParentDirectoryPath = (path) => {
+const getParentDirectoryPath = (path) => {
     const pieces = path.split('/').filter((piece) => piece !== '');
     pieces.pop();
     if (pieces.length === 0) {
@@ -176,14 +176,14 @@ export const getParentDirectoryPath = (path) => {
     return '/' + pieces.join('/') + '/';
 };
 
-export const mkdir = async (ctx, targetPath, directoryName) => {
+const mkdir = async (ctx, targetPath, directoryName) => {
     const fileSystem = await getFileSystem(ctx);
     const targetDirectory = getDirectory(fileSystem, targetPath);
     targetDirectory[directoryName] = { '.': [] };
     await storeFileSystem(ctx, fileSystem);
 };
 
-export const saveFile = async (ctx, path, fileName, messageId) => {
+const saveFile = async (ctx, path, fileName, messageId) => {
     const fileSystem = await getFileSystem(ctx);
     const targetDirectory = getDirectory(fileSystem, path);
     for (const file in targetDirectory['.']){
@@ -203,7 +203,7 @@ export const saveFile = async (ctx, path, fileName, messageId) => {
     await storeFileSystem(ctx, fileSystem);
 };
 
-export const deleteDirectory = async (ctx, path, directoryName) => {
+const deleteDirectory = async (ctx, path, directoryName) => {
     const fileSystem = await getFileSystem(ctx);
     const targetDirectory = getDirectory(fileSystem, path);
     const directoryContent = targetDirectory[directoryName];
@@ -213,7 +213,7 @@ export const deleteDirectory = async (ctx, path, directoryName) => {
     await storeFileSystem(ctx, fileSystem);
 };
 
-export const deleteFile = async (ctx, path, fileName) => {
+const deleteFile = async (ctx, path, fileName) => {
     const fileSystem = await getFileSystem(ctx);
     const targetDirectory = getDirectory(fileSystem, path);
     const fileContent = targetDirectory['.'].find(f => f.name === fileName);
@@ -224,7 +224,7 @@ export const deleteFile = async (ctx, path, fileName) => {
     await storeFileSystem(ctx, fileSystem);
 };
 
-export const renameFile = async (ctx, path, oldFileName, newFilename) => {
+const renameFile = async (ctx, path, oldFileName, newFilename) => {
     const fileExtension = oldFileName.split('.').pop()
     const fileSystem = await getFileSystem(ctx);
     const targetDirectory = getDirectory(fileSystem, path);
@@ -234,7 +234,7 @@ export const renameFile = async (ctx, path, oldFileName, newFilename) => {
     await storeFileSystem(ctx, fileSystem);
 };
 
-export const moveFile = async (ctx, oldPath, newPath, fileName) => {
+const moveFile = async (ctx, oldPath, newPath, fileName) => {
     const fileSystem = await getFileSystem(ctx);
     const sourceDirectory = getDirectory(fileSystem, oldPath);
     const targetDirectory = getDirectory(fileSystem, newPath);
@@ -242,4 +242,19 @@ export const moveFile = async (ctx, oldPath, newPath, fileName) => {
     targetDirectory['.'].push(fileContent);
     sourceDirectory['.'] = sourceDirectory['.'].filter(f => f.name !== fileName);
     await storeFileSystem(ctx, fileSystem);
+};
+
+module.exports = {
+    storeFileSystem,
+    initializeFileSystem,
+    getFileSystem,
+    getElementsInPath,
+    getKeyboardDirectories,
+    getParentDirectoryPath,
+    mkdir,
+    saveFile,
+    deleteDirectory,
+    deleteFile,
+    renameFile,
+    moveFile,
 };

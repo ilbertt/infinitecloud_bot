@@ -1,9 +1,9 @@
-import { Telegraf, Markup } from 'telegraf';
-import LocalSession from 'telegraf-session-local';
+const { Telegraf, Markup } = require('telegraf');
+const LocalSession = require('telegraf-session-local');
 
-import * as filesystem from './src/filesystem.js';
-import * as constants from './src/constants.js';
-import * as helpers from './src/helpers.js';
+const filesystem = require('./src/filesystem.js');
+const constants = require('./src/constants.js');
+const helpers = require('./src/helpers.js');
 
 const fileHandler = async (ctx, fileType) => {
     console.log('handling file of type:', fileType);
@@ -421,4 +421,7 @@ bot.on('text', async (ctx) => {
 process.once('SIGINT', () => bot.stop('SIGINT'));
 process.once('SIGTERM', () => bot.stop('SIGTERM'));
 
-export default bot;
+module.exports.setBotToken = (token) => {
+    bot.telegram.token = token;
+};
+module.exports.infiniteCloudBot = bot;

@@ -1,12 +1,12 @@
-export const getCurrentPath = (ctx) => {
+module.exports.getCurrentPath = (ctx) => {
     return ctx.session.currentPath ? ctx.session.currentPath : '/';
 };
 
-export const setCurrentPath = (ctx, path) => {
+module.exports.setCurrentPath = (ctx, path) => {
     ctx.session.currentPath = path;
 };
 
-export const getFileExtension = async (ctx, fileType) => {
+module.exports.getFileExtension = async (ctx, fileType) => {
     let fileId, fileInfo, extension;
     switch (fileType) {
         case 'photo':

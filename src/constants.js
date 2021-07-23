@@ -1,48 +1,89 @@
-import { Markup } from 'telegraf';
+const { Markup } = require('telegraf');
 
-export const dashboardUrl = 'https://infinitecloud-website-api.web.app/';
+const dashboardUrl = 'https://infinitecloud-website-api.web.app/';
 
 /* ACTIONS */
-export const thisDirAction = '.';
-export const parentDirAction = '..';
-export const mkdirAction = 'mkdir';
-export const cancelAction = 'cancel';
-export const backAction = 'back';
-export const deleteAction = 'delete';
-export const SAVE_FILE_ACTION = 'save-file-action';
-export const MKDIR_ACTION = 'mkdir-action';
-export const WAIT_DIRECTORY_NAME = 'wait-directory-name';
-export const WAIT_FILE_NAME = 'wait-file-name';
-export const EXPLORER_ACTION = 'explorer-action';
-export const DELETE_DIR_ACTION = 'delete-dir-action';
-export const DELETE_FILE_ACTION = 'delete-file-action';
-export const RENAME_FILE_ACTION = 'rename-file-action';
-export const SELECT_MOVE_FILE_ACTION = 'select-move-file-action';
-export const MOVE_FILE_ACTION = 'move-file-action';
-export const fileActionPrefix = '/';
+const thisDirAction = '.';
+const parentDirAction = '..';
+const mkdirAction = 'mkdir';
+const cancelAction = 'cancel';
+const backAction = 'back';
+const deleteAction = 'delete';
+const SAVE_FILE_ACTION = 'save-file-action';
+const MKDIR_ACTION = 'mkdir-action';
+const WAIT_DIRECTORY_NAME = 'wait-directory-name';
+const WAIT_FILE_NAME = 'wait-file-name';
+const EXPLORER_ACTION = 'explorer-action';
+const DELETE_DIR_ACTION = 'delete-dir-action';
+const DELETE_FILE_ACTION = 'delete-file-action';
+const RENAME_FILE_ACTION = 'rename-file-action';
+const SELECT_MOVE_FILE_ACTION = 'select-move-file-action';
+const MOVE_FILE_ACTION = 'move-file-action';
+const fileActionPrefix = '/';
 
 /* SYSTEM MESSAGES */
-export const currentPathMessage = 'CURRENT PATH:\n';
-export const saveFileMessage = 'SAVE FILE:\n';
-export const createDirMessage = 'CREATE DIRECTORY:\n';
-export const askDirectoryNameMessage = 'Input DIRECTORY name:\n';
-export const askFileNameMessage = 'Input FILE name:\n';
-export const deleteDirMessage = 'DELETE DIRECTORY:\n';
-export const deleteFileMessage = 'DELETE FILE:\n';
-export const moveFileMessage = 'MOVE FILE:\n';
+const currentPathMessage = 'CURRENT PATH:\n';
+const saveFileMessage = 'SAVE FILE:\n';
+const createDirMessage = 'CREATE DIRECTORY:\n';
+const askDirectoryNameMessage = 'Input DIRECTORY name:\n';
+const askFileNameMessage = 'Input FILE name:\n';
+const deleteDirMessage = 'DELETE DIRECTORY:\n';
+const deleteFileMessage = 'DELETE FILE:\n';
+const moveFileMessage = 'MOVE FILE:\n';
 
-export const fileSystemNotFound = 'Filesystem not found';
+const fileSystemNotFound = 'Filesystem not found';
 
 /* INLINE BUTTONS */
-export const mkdirInlineButton = Markup.button.callback(
+const mkdirInlineButton = Markup.button.callback(
     '+ New Directory',
     mkdirAction
 );
-export const parentDirInlineButton = Markup.button.callback('..', parentDirAction);
-export const thisDirInlineButton = Markup.button.callback('.', thisDirAction);
-export const cancelOperationInlineButton = Markup.button.callback(
+const parentDirInlineButton = Markup.button.callback('..', parentDirAction);
+const thisDirInlineButton = Markup.button.callback('.', thisDirAction);
+const cancelOperationInlineButton = Markup.button.callback(
     'Cancel',
     cancelAction
 );
-export const backInlineButton = Markup.button.callback('<< Back', backAction);
-export const deleteInlineButton = Markup.button.callback('🗑️ DELETE THIS DIR', deleteAction);
+const backInlineButton = Markup.button.callback('<< Back', backAction);
+const deleteInlineButton = Markup.button.callback(
+    '🗑️ DELETE THIS DIR',
+    deleteAction
+);
+
+module.exports = {
+    thisDirAction,
+    parentDirAction,
+    mkdirAction,
+    cancelAction,
+    backAction,
+    deleteAction,
+    SAVE_FILE_ACTION,
+    MKDIR_ACTION,
+    WAIT_DIRECTORY_NAME,
+    WAIT_FILE_NAME,
+    EXPLORER_ACTION,
+    DELETE_DIR_ACTION,
+    DELETE_FILE_ACTION,
+    RENAME_FILE_ACTION,
+    SELECT_MOVE_FILE_ACTION,
+    MOVE_FILE_ACTION,
+    fileActionPrefix,
+
+    currentPathMessage,
+    saveFileMessage,
+    createDirMessage,
+    askDirectoryNameMessage,
+    askFileNameMessage,
+    deleteDirMessage,
+    deleteFileMessage,
+    moveFileMessage,
+
+    fileSystemNotFound,
+
+    mkdirInlineButton,
+    parentDirInlineButton,
+    thisDirInlineButton,
+    cancelOperationInlineButton,
+    backInlineButton,
+    deleteInlineButton,
+};
