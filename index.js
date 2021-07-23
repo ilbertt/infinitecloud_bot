@@ -417,11 +417,25 @@ bot.on('text', async (ctx) => {
     return await ctx.replyWithMarkdown(message);
 });
 
+bot.catch((err, ctx) => {
+	return ctx.reply(`Ooops, encountered an error for ${ctx.updateType}`, err);
+});
+
 // Enable graceful stop
 process.once('SIGINT', () => bot.stop('SIGINT'));
 process.once('SIGTERM', () => bot.stop('SIGTERM'));
 
-module.exports.setBotToken = (token) => {
+const setBotToken = (token) => {
     bot.telegram.token = token;
 };
+
+if (require.main === module) {
+    const dotenv = require('dotenv');
+    dotenv.config();
+
+    setBotToken(process.env.BOT_TOKEN);
+    bot.launch();
+}
+
+module.exports.setBotToken = setBotToken;
 module.exports.infiniteCloudBot = bot;
