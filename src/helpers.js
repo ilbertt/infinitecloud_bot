@@ -21,5 +21,15 @@ module.exports.getFileExtension = async (ctx, fileType) => {
             return extension;
         case 'video':
             return '.mp4';
+        case 'audio':
+            fileId = ctx.message.audio.file_id;
+            fileInfo = await ctx.telegram.getFile(fileId);
+            extension = '';
+            if (fileInfo.file_path.includes('.')) {
+                extension = '.'+fileInfo.file_path.split('.').pop();
+            }
+            return extension;
+        default:
+            return `.tg${fileType}`;
     }
 };

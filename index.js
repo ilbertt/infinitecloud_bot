@@ -17,7 +17,7 @@ const fileHandler = async (ctx, fileType) => {
         ctx,
         currentPath
     );
-    ctx.replyWithMarkdown(
+    await ctx.replyWithMarkdown(
         `${constants.saveFileMessage}${constants.currentPathMessage}\`/\``,
         {
             parse_mode: 'Markdown',
@@ -43,15 +43,43 @@ bot.start(async (ctx) => {
     return await filesystem.initializeFileSystem(ctx);
 });
 bot.help((ctx) => ctx.reply('Help message'));
-bot.on('photo', async (ctx) => {
-    return await fileHandler(ctx, 'photo');
+
+/* FILE HANDLERS */
+bot.on('animation', async (ctx) => {
+    return await fileHandler(ctx, 'animation');
+});
+bot.on('audio', async (ctx) => {
+    return await fileHandler(ctx, 'audio');
+});
+bot.on('contact', async (ctx) => {
+    return await fileHandler(ctx, 'contact');
 });
 bot.on('document', async (ctx) => {
     return await fileHandler(ctx, 'document');
 });
+bot.on('location', async (ctx) => {
+    return await fileHandler(ctx, 'location');
+});
+bot.on('photo', async (ctx) => {
+    return await fileHandler(ctx, 'photo');
+});
+bot.on('poll', async (ctx) => {
+    return await fileHandler(ctx, 'poll');
+});
+bot.on('sticker', async (ctx) => {
+    return await fileHandler(ctx, 'sticker');
+});
 bot.on('video', async (ctx) => {
     return await fileHandler(ctx, 'video');
 });
+bot.on('video_note', async (ctx) => {
+    return await fileHandler(ctx, 'video_note');
+});
+bot.on('voice', async (ctx) => {
+    return await fileHandler(ctx, 'voice');
+});
+/* --- */
+
 bot.command('mkdir', async (ctx) => {
     const currentPath = helpers.getCurrentPath(ctx);
     ctx.session.action = constants.MKDIR_ACTION;
@@ -384,8 +412,8 @@ bot.on('text', async (ctx) => {
     const reply = ctx.message.text;
     const action = ctx.session.action;
 
-    let message = 'Error';
     if(waitReply) {
+        let message = 'Error';
         if (reply.includes(constants.fileActionPrefix)) {
             message = `Names cannot include *${constants.fileActionPrefix}* character.\nRetry`;
         } else {
@@ -413,8 +441,10 @@ bot.on('text', async (ctx) => {
             ctx.session.waitReply = null;
             ctx.session.action = null;
         }
+        return await ctx.replyWithMarkdown(message);
+    } else {
+        return await fileHandler(ctx, 'text');
     }
-    return await ctx.replyWithMarkdown(message);
 });
 
 bot.catch((err, ctx) => {
