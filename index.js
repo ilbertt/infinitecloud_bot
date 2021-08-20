@@ -361,12 +361,19 @@ bot.action(/^\//, async (ctx) => {
     const currentPath = helpers.getCurrentPath(ctx);
     console.log('File action:', action);
     if (action === constants.DELETE_FILE_ACTION) {
-        await filesystem.deleteFile(ctx, currentPath, fileName);
+        const deletedFile = await filesystem.deleteFile(ctx, currentPath, fileName);
         ctx.session.action = null;
         ctx.session.currentPath = null;
-        return ctx.replyWithMarkdown(
-            `File *${fileName}* at \`${currentPath}\` DELETED`
-        );
+        const message = `File *${fileName}* at \`${currentPath}\` DELETED`;
+        if (currentPath.startsWith('/Trash')) {
+            return ctx.replyWithMarkdown(
+                `${message}\n\nHere's the file, in case you want to *DELETE IT FOREVER* from this chat or *RESTORE* it by forwarding it again to this chat.`,
+                {
+                    reply_to_message_id: deletedFile.messageId,
+                }
+            );
+        }
+        return ctx.replyWithMarkdown(message);
     } else if (action === constants.RENAME_FILE_ACTION) {
         ctx.session.waitReply = constants.WAIT_FILE_NAME;
         ctx.session.fileToHandle = fileName;

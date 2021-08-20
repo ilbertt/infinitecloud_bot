@@ -218,7 +218,7 @@ const deleteDirectory = async (ctx, path, directoryName) => {
 const deleteFile = async (ctx, path, fileName) => {
     const fileSystem = await getFileSystem(ctx);
     const targetDirectory = getDirectory(fileSystem, path);
-    const fileContent = targetDirectory['.'].find((f) => f.name === fileName);
+    const fileContent = {...targetDirectory['.'].find((f) => f.name === fileName)};
     if (fileContent) {
         fileSystem['/']['Trash']['.'].push(fileContent);
     }
@@ -226,6 +226,7 @@ const deleteFile = async (ctx, path, fileName) => {
         (f) => f.name !== fileName
     );
     await storeFileSystem(ctx, fileSystem);
+    return fileContent;
 };
 
 const renameFile = async (ctx, path, oldFileName, newFilename) => {
