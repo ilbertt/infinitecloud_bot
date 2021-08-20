@@ -29,6 +29,12 @@ const fileHandler = async (ctx, fileType) => {
     return;
 };
 
+const getGenericErrorWithCommands = async (ctx) => {
+    const commands = await ctx.getMyCommands();
+    const availableCommands = commands.map(cmd => `/${cmd.command} - ${cmd.description}`).join('\n');
+    return `${constants.genericError}\n${availableCommands}`;
+};
+
 const bot = new Telegraf('');
 // bot.use(Telegraf.log());
 bot.use(new LocalSession({ storage: LocalSession.storageMemory }).middleware());
@@ -235,17 +241,21 @@ bot.action(constants.thisDirAction, async (ctx) => {
             `Moved *${fileName}*\nfrom \`${sourcePath}\`\nto \`${currentPath}\``
         );
     }
-    return ctx.editMessageText(
-        `${message}${constants.currentPathMessage}\`${currentPath}\``,
-        {
-            parse_mode: 'Markdown',
-            reply_markup: {
-                ...Markup.inlineKeyboard([constants.backInlineButton])
-                    .reply_markup,
-                force_reply: true,
-            },
-        }
-    );
+    if (message) {
+        return ctx.editMessageText(
+            `${message}${constants.currentPathMessage}\`${currentPath}\``,
+            {
+                parse_mode: 'Markdown',
+                reply_markup: {
+                    ...Markup.inlineKeyboard([constants.backInlineButton])
+                        .reply_markup,
+                    force_reply: true,
+                },
+            }
+        );
+    } else {
+        return ctx.reply(await getGenericErrorWithCommands(ctx));
+    }
 });
 bot.action(constants.parentDirAction, async (ctx) => {
     const currentPath = helpers.getCurrentPath(ctx);
@@ -255,8 +265,8 @@ bot.action(constants.parentDirAction, async (ctx) => {
     const inlineKeyboardButtons = await filesystem.getKeyboardDirectories(
         ctx,
         newCurrentPath,
-        action === constants.EXPLORER_ACTION,
-        action === constants.EXPLORER_ACTION
+        action !== constants.SAVE_FILE_ACTION && action !== constants.MKDIR_ACTION,
+        action !== constants.SAVE_FILE_ACTION && action !== constants.MKDIR_ACTION
     );
 
     let message = '';
@@ -264,25 +274,28 @@ bot.action(constants.parentDirAction, async (ctx) => {
         message = constants.createDirMessage;
     } else if (action === constants.SAVE_FILE_ACTION) {
         message = constants.saveFileMessage;
+    } else if (action === constants.DELETE_FILE_ACTION) {
+        message = constants.deleteFileMessage;
+    } else if (action === constants.DELETE_DIR_ACTION) {
+        message = constants.deleteDirMessage;
     }
 
-    return ctx.editMessageText(
-        `${message}${constants.currentPathMessage}\`${newCurrentPath}\``,
-        {
-            parse_mode: 'Markdown',
-            reply_markup: {
-                ...Markup.inlineKeyboard(inlineKeyboardButtons).reply_markup,
-            },
-        }
-    );
+    if (message) {
+        return ctx.editMessageText(
+            `${message}${constants.currentPathMessage}\`${newCurrentPath}\``,
+            {
+                parse_mode: 'Markdown',
+                reply_markup: {
+                    ...Markup.inlineKeyboard(inlineKeyboardButtons).reply_markup,
+                },
+            }
+        );
+    } else {
+        return ctx.reply(await getGenericErrorWithCommands(ctx));
+    }
 });
 bot.action(constants.backAction, async (ctx) => {
     const action = ctx.session.action;
-    const currentPath = helpers.getCurrentPath(ctx);
-    const inlineKeyboardButtons = await filesystem.getKeyboardDirectories(
-        ctx,
-        currentPath
-    );
 
     let message = '';
     if (action === constants.MKDIR_ACTION) {
@@ -293,15 +306,24 @@ bot.action(constants.backAction, async (ctx) => {
 
     ctx.session.waitReply = null;
 
-    return ctx.editMessageText(
-        `${message}${constants.currentPathMessage}\`${currentPath}\``,
-        {
-            parse_mode: 'Markdown',
-            reply_markup: {
-                ...Markup.inlineKeyboard(inlineKeyboardButtons).reply_markup,
-            },
-        }
-    );
+    if (message) {
+        const currentPath = helpers.getCurrentPath(ctx);
+        const inlineKeyboardButtons = await filesystem.getKeyboardDirectories(
+            ctx,
+            currentPath
+        );
+        return ctx.editMessageText(
+            `${message}${constants.currentPathMessage}\`${currentPath}\``,
+            {
+                parse_mode: 'Markdown',
+                reply_markup: {
+                    ...Markup.inlineKeyboard(inlineKeyboardButtons).reply_markup,
+                },
+            }
+        );
+    } else {
+        return ctx.reply(await getGenericErrorWithCommands(ctx));
+    }
 });
 bot.action(constants.deleteAction, async (ctx) => {
     const currentPath = helpers.getCurrentPath(ctx); // format /parentDir/.../childDir/currentDir/
@@ -325,10 +347,8 @@ bot.action(/^(.?$|[^\/].+)/, async (ctx) => {
     const inlineKeyboardButtons = await filesystem.getKeyboardDirectories(
         ctx,
         newCurrentPath,
-        action === constants.EXPLORER_ACTION ||
-            action === constants.DELETE_DIR_ACTION ||
-            action === constants.RENAME_FILE_ACTION ||
-            action === constants.SELECT_MOVE_FILE_ACTION,
+        action !== constants.SAVE_FILE_ACTION &&
+            action !== constants.MKDIR_ACTION,
         action === constants.EXPLORER_ACTION ||
             action === constants.DELETE_FILE_ACTION ||
             action === constants.RENAME_FILE_ACTION ||
@@ -399,18 +419,20 @@ bot.action(/^\//, async (ctx) => {
                 },
             }
         );
-    }
-    const fileMessageId = ctx.callbackQuery.data.split('/')[1];
-    try {
-        if (fileMessageId) {
-            return await ctx.telegram.sendMessage(ctx.chat.id, 'requested file', {
-                reply_to_message_id: fileMessageId,
-            });
-        } else {
-            throw new Error('File message not found');
+    } else if (action === constants.EXPLORER_ACTION) {
+        const fileMessageId = ctx.callbackQuery.data.split('/')[1];
+        try {
+            if (fileMessageId) {
+                return await ctx.telegram.sendMessage(ctx.chat.id, `File: *${fileName}*\nPath: \`${currentPath}\``, {
+                    parse_mode: 'Markdown',
+                    reply_to_message_id: fileMessageId,
+                });
+            } else {
+                throw new Error('File message not found');
+            }
+        } catch (err) {
+            return await ctx.reply('Error: ' + err.message);
         }
-    } catch (err) {
-        return await ctx.reply('Error: ' + err.message);
     }
 });
 bot.on('text', async (ctx) => {

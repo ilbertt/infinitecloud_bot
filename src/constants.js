@@ -32,6 +32,7 @@ const deleteFileMessage = 'DELETE FILE:\n';
 const moveFileMessage = 'MOVE FILE:\n';
 
 const fileSystemNotFound = 'Filesystem not found';
+const genericError = 'Error!\nUse one of the available commands instead:';
 
 /* INLINE BUTTONS */
 const mkdirInlineButton = Markup.button.callback(
@@ -51,6 +52,8 @@ const deleteInlineButton = Markup.button.callback(
 );
 
 module.exports = {
+    dashboardUrl,
+
     thisDirAction,
     parentDirAction,
     mkdirAction,
@@ -79,6 +82,7 @@ module.exports = {
     moveFileMessage,
 
     fileSystemNotFound,
+    genericError,
 
     mkdirInlineButton,
     parentDirInlineButton,
