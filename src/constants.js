@@ -34,6 +34,8 @@ const moveFileMessage = 'MOVE FILE:\n';
 const fileSystemNotFound = 'Filesystem not found';
 const genericError = 'Error!\nUse one of the available commands instead:';
 
+const pinnedMessageAlert = (chatId) => `Please, make sure that the *last* pinned message is always the \`filesystem${chatId}.json\` file, otherwise _the bot won't work_!`;
+
 /* INLINE BUTTONS */
 const mkdirInlineButton = Markup.button.callback(
     '+ New Directory',
@@ -83,6 +85,8 @@ module.exports = {
 
     fileSystemNotFound,
     genericError,
+
+    pinnedMessageAlert,
 
     mkdirInlineButton,
     parentDirInlineButton,

@@ -476,6 +476,10 @@ bot.on('text', async (ctx) => {
     }
 });
 
+bot.on('pinned_message', async (ctx) => {
+    return ctx.replyWithMarkdown(constants.pinnedMessageAlert(ctx.chat.id));
+});
+
 bot.catch((err, ctx) => {
 	return ctx.reply(`Ooops, encountered an error for ${ctx.updateType}`, err);
 });
