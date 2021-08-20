@@ -280,7 +280,7 @@ bot.action(constants.parentDirAction, async (ctx) => {
         message = constants.deleteDirMessage;
     }
 
-    if (message) {
+    if (message || action === constants.EXPLORER_ACTION) {
         return ctx.editMessageText(
             `${message}${constants.currentPathMessage}\`${newCurrentPath}\``,
             {
