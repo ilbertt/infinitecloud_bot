@@ -45,10 +45,14 @@ bot.start(async (ctx) => {
     if (userFirstName) {
         msg = `Hello ${userFirstName}!\nWelcome on *Infinite Cloud*`;
     }
+    const botHelp = helpers.getHelpMessage();
+    msg = msg + `\n-----\nHere's some help to start:\n${botHelp}`;
     ctx.replyWithMarkdown(msg);
     return await filesystem.initializeFileSystem(ctx);
 });
-bot.help((ctx) => ctx.reply('Help message'));
+bot.help((ctx) => {
+    return ctx.replyWithMarkdown(helpers.getHelpMessage());;
+});
 
 /* FILE HANDLERS */
 bot.on('animation', async (ctx) => {

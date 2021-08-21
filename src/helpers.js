@@ -1,3 +1,5 @@
+const fs = require('fs');
+
 module.exports.getCurrentPath = (ctx) => {
     return ctx.session.currentPath ? ctx.session.currentPath : '/';
 };
@@ -31,5 +33,16 @@ module.exports.getFileExtension = async (ctx, fileType) => {
             return extension;
         default:
             return `.tg${fileType}`;
+    }
+};
+
+module.exports.getHelpMessage = () => {
+    try {
+        return fs.readFileSync(
+            'res/BOT_HELP.md',
+            { encoding: 'utf8' }
+        );
+    } catch (e) {
+        return 'Help in not available.';
     }
 };
