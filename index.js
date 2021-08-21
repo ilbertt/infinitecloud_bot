@@ -282,8 +282,8 @@ bot.action(constants.parentDirAction, async (ctx) => {
     const inlineKeyboardButtons = await filesystem.getKeyboardDirectories(
         ctx,
         newCurrentPath,
-        action !== constants.SAVE_FILE_ACTION && action !== constants.MKDIR_ACTION,
-        action !== constants.SAVE_FILE_ACTION && action !== constants.MKDIR_ACTION
+        action !== constants.SAVE_FILE_ACTION && action !== constants.MKDIR_ACTION && action !== constants.MOVE_FILE_ACTION,
+        action !== constants.SAVE_FILE_ACTION && action !== constants.MKDIR_ACTION && action !== constants.MOVE_FILE_ACTION
     );
 
     let message = '';
@@ -356,6 +356,7 @@ bot.action(constants.deleteAction, async (ctx) => {
     );
 });
 bot.action(/^(.?$|[^\/].+)/, async (ctx) => {
+    // DIRECTORY action
     const action = ctx.session.action;
     const currentPath = helpers.getCurrentPath(ctx);
     const directory = ctx.callbackQuery.data;
@@ -364,8 +365,10 @@ bot.action(/^(.?$|[^\/].+)/, async (ctx) => {
     const inlineKeyboardButtons = await filesystem.getKeyboardDirectories(
         ctx,
         newCurrentPath,
-        action !== constants.SAVE_FILE_ACTION &&
-            action !== constants.MKDIR_ACTION,
+        action === constants.EXPLORER_ACTION ||
+            action === constants.DELETE_DIR_ACTION ||
+            action === constants.RENAME_FILE_ACTION ||
+            action === constants.SELECT_MOVE_FILE_ACTION,
         action === constants.EXPLORER_ACTION ||
             action === constants.DELETE_FILE_ACTION ||
             action === constants.RENAME_FILE_ACTION ||
@@ -379,7 +382,7 @@ bot.action(/^(.?$|[^\/].+)/, async (ctx) => {
     } else if (action === constants.SAVE_FILE_ACTION) {
         message = constants.saveFileMessage;
     } else if (action === constants.MOVE_FILE_ACTION) {
-        message = constants.moveFileMessage + ctx.session.fileToHandle + '\n';
+        message = `${constants.moveFileMessage}*${ctx.session.fileToHandle}*\n`;
     }
 
     return ctx.editMessageText(
@@ -393,6 +396,7 @@ bot.action(/^(.?$|[^\/].+)/, async (ctx) => {
     );
 });
 bot.action(/^\//, async (ctx) => {
+    // FILE action
     const action = ctx.session.action;
     const currentPath = helpers.getCurrentPath(ctx);
     const fileMessageId = ctx.callbackQuery.data.split('/')[1];
