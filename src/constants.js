@@ -19,6 +19,7 @@ const DELETE_FILE_ACTION = 'delete-file-action';
 const RENAME_FILE_ACTION = 'rename-file-action';
 const SELECT_MOVE_FILE_ACTION = 'select-move-file-action';
 const MOVE_FILE_ACTION = 'move-file-action';
+const RESTORE_FILESYSTEM_ACTION = 'restore-filesystem-action';
 const fileActionPrefix = '/';
 
 /* SYSTEM MESSAGES */
@@ -30,8 +31,11 @@ const askFileNameMessage = 'Input FILE name:\n';
 const deleteDirMessage = 'DELETE DIRECTORY:\n';
 const deleteFileMessage = 'DELETE FILE:\n';
 const moveFileMessage = 'MOVE FILE:\n';
+const restoreFilesystemMessage = 'Now send me the filesystem JSON file';
 
 const fileSystemNotFound = 'Filesystem not found';
+const fileSystemRestoredSuccess = 'Filesystem restored from this file.';
+const fileSystemRestoredError = 'Cannot restore filesystem from pinned message';
 const genericError = 'Error!\nUse one of the available commands instead:';
 
 const pinnedMessageAlert = (chatId) => `Please, make sure that the *last* pinned message is always the \`filesystem${chatId}.json\` file, otherwise _the bot won't work_!`;
@@ -72,6 +76,7 @@ module.exports = {
     RENAME_FILE_ACTION,
     SELECT_MOVE_FILE_ACTION,
     MOVE_FILE_ACTION,
+    RESTORE_FILESYSTEM_ACTION,
     fileActionPrefix,
 
     currentPathMessage,
@@ -82,8 +87,11 @@ module.exports = {
     deleteDirMessage,
     deleteFileMessage,
     moveFileMessage,
+    restoreFilesystemMessage,
 
     fileSystemNotFound,
+    fileSystemRestoredSuccess,
+    fileSystemRestoredError,
     genericError,
 
     pinnedMessageAlert,

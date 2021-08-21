@@ -61,6 +61,17 @@ bot.on('contact', async (ctx) => {
     return await fileHandler(ctx, 'contact');
 });
 bot.on('document', async (ctx) => {
+    if (ctx.session.action === constants.RESTORE_FILESYSTEM_ACTION) {
+        try {
+            await filesystem.restoreFilesystem(ctx);
+            return ctx.reply(constants.fileSystemRestoredSuccess, {
+                reply_to_message_id: ctx.message.message_id,
+            });
+        } catch (e) {
+            console.log(e);
+            return ctx.reply(constants.fileSystemRestoredError);
+        }
+    }
     return await fileHandler(ctx, 'document');
 });
 bot.on('location', async (ctx) => {
@@ -218,6 +229,10 @@ bot.command('dashboard', async (ctx) => {
     return ctx.replyWithMarkdown(
         `Dashboard available at:\n[${constants.dashboardUrl}](${constants.dashboardUrl})`
     );
+});
+bot.command('restore_filesystem', async (ctx) => {
+    ctx.session.action = constants.RESTORE_FILESYSTEM_ACTION;
+    return ctx.reply(constants.restoreFilesystemMessage);
 });
 bot.action(constants.thisDirAction, async (ctx) => {
     const currentPath = helpers.getCurrentPath(ctx);

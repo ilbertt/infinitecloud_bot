@@ -78,6 +78,14 @@ const fetchFileSystemObj = async (ctx, rootMessage) => {
     });
 };
 
+const restoreFilesystem = async (ctx) => {
+    await unpinOldFilesystem(ctx);
+    await ctx.pinChatMessage(ctx.message.message_id, {
+        disable_notification: true,
+    });
+    await fetchFileSystemObj(ctx, ctx.message);
+};
+
 const getFileSystem = async (ctx) => {
     const sessionFilesystem = ctx.session.filesystem;
     if (!sessionFilesystem) {
@@ -257,6 +265,7 @@ module.exports = {
     storeFileSystem,
     initializeFileSystem,
     getFileSystem,
+    restoreFilesystem,
     getElementsInPath,
     getKeyboardDirectories,
     getParentDirectoryPath,
