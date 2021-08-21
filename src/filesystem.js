@@ -39,7 +39,7 @@ const storeFileSystem = async (ctx, fileSystem) => {
 
 const initializeFileSystem = async (ctx) => {
     const rawFilesystem = fs.readFileSync(
-        'src/initialFilesystem.json',
+        'res/initialFilesystem.json',
         { encoding: 'utf8' }
     );
     await storeFileSystem(ctx, JSON.parse(rawFilesystem));
