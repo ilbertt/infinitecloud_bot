@@ -53,6 +53,9 @@ bot.start(async (ctx) => {
 bot.help((ctx) => {
     return ctx.replyWithMarkdown(helpers.getHelpMessage());;
 });
+bot.command('info', (ctx) => {
+    return ctx.replyWithMarkdown(constants.botInfo);
+});
 
 /* FILE HANDLERS */
 bot.on('animation', async (ctx) => {
@@ -228,11 +231,6 @@ bot.command('filesystem', async (ctx) => {
         );
     }
     return ctx.reply(constants.fileSystemNotFound);
-});
-bot.command('dashboard', async (ctx) => {
-    return ctx.replyWithMarkdown(
-        `Dashboard available at:\n[${constants.dashboardUrl}](${constants.dashboardUrl})`
-    );
 });
 bot.command('restore_filesystem', async (ctx) => {
     ctx.session.action = constants.RESTORE_FILESYSTEM_ACTION;

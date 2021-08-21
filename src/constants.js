@@ -1,6 +1,8 @@
 const { Markup } = require('telegraf');
 
 const dashboardUrl = 'https://infinitecloud-website-api.web.app/';
+const githubUrl = 'https://github.com/Luca8991/infinitecloud_bot';
+const botInfo = `*Infinite Cloud Bot* - infinite free cloud storage on Telegram\n\nUsage instructions: /help\nDashboard: ${dashboardUrl}\n\nMore info and source code: [${githubUrl}](${githubUrl})`;
 
 /* ACTIONS */
 const thisDirAction = '.';
@@ -38,7 +40,8 @@ const fileSystemRestoredSuccess = 'Filesystem restored from this file.';
 const fileSystemRestoredError = 'Cannot restore filesystem from pinned message';
 const genericError = 'Error!\nUse one of the available commands instead:';
 
-const pinnedMessageAlert = (chatId) => `Please, make sure that the *last* pinned message is always the \`filesystem${chatId}.json\` file, otherwise _the bot won't work_!`;
+const pinnedMessageAlert = (chatId) =>
+    `Please, make sure that the *last* pinned message is always the \`filesystem${chatId}.json\` file, otherwise _the bot won't work_!`;
 
 /* INLINE BUTTONS */
 const mkdirInlineButton = Markup.button.callback(
@@ -59,6 +62,8 @@ const deleteInlineButton = Markup.button.callback(
 
 module.exports = {
     dashboardUrl,
+    githubUrl,
+    botInfo,
 
     thisDirAction,
     parentDirAction,
