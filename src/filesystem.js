@@ -8,28 +8,6 @@ const {
     thisDirAction,
 } = require('./constants.js');
 
-//const fileSystemMessage = 'FILESYSTEM - DO NOT DELETE, EDIT OR UNPIN THIS MESSAGE\n';
-const FILESYSTEM_INIT = {
-    '/': {
-        '.': [],
-        Documents: {
-            '.': [],
-        },
-        Pictures: {
-            '.': [],
-        },
-        Videos: {
-            '.': [],
-        },
-        Music: {
-            '.': [],
-        },
-        Trash: {
-            '.': [],
-        },
-    },
-};
-
 const unpinOldFilesystem = async (ctx) => {
     const chat = await ctx.getChat();
     const rootMessage = chat.pinned_message;
@@ -60,7 +38,11 @@ const storeFileSystem = async (ctx, fileSystem) => {
 };
 
 const initializeFileSystem = async (ctx) => {
-    await storeFileSystem(ctx, FILESYSTEM_INIT);
+    const rawFilesystem = fs.readFileSync(
+        'src/initialFilesystem.json',
+        { encoding: 'utf8' }
+    );
+    await storeFileSystem(ctx, JSON.parse(rawFilesystem));
 };
 
 const fetchFileSystemObj = async (ctx, rootMessage) => {
@@ -226,7 +208,9 @@ const deleteDirectory = async (ctx, path, directoryName) => {
 const deleteFile = async (ctx, path, fileName) => {
     const fileSystem = await getFileSystem(ctx);
     const targetDirectory = getDirectory(fileSystem, path);
-    const fileContent = {...targetDirectory['.'].find((f) => f.name === fileName)};
+    const fileContent = {
+        ...targetDirectory['.'].find((f) => f.name === fileName),
+    };
     if (fileContent) {
         fileSystem['/']['Trash']['.'].push(fileContent);
     }
