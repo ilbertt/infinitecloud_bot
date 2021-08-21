@@ -104,3 +104,8 @@ So, an example of a filesystem (as found in [initialFilesystem.json](res/initial
 
 ## Dashboard
 There's also a web app available at [https://infinitecloud-website-api.web.app/](https://infinitecloud-website-api.web.app/) and hosted on [Firebase](https://firebase.google.com/), where you can view your files (you _can't_ upload or download them from there). Source code available at [Luca8991/infinite-cloud-website](https://github.com/Luca8991/infinite-cloud-website).
+
+## Contribute
+If you want to improve this bot, feel free to open issues and/or pull requests.
+
+_Let's make this bot better, so that anyone can have free INFINITE cloud storage!_
