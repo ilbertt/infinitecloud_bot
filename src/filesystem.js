@@ -124,7 +124,7 @@ const getElementsInPath = (
                 // action format:
                 // FILE: '/'+messageId+'/'+filename
                 action:
-                    fileActionPrefix + f.messageId + fileActionPrefix + f.name,
+                    fileActionPrefix + f.messageId,
             });
         }
     }
@@ -205,17 +205,26 @@ const deleteDirectory = async (ctx, path, directoryName) => {
     await storeFileSystem(ctx, fileSystem);
 };
 
-const deleteFile = async (ctx, path, fileName) => {
+const getFile = async (ctx, path, fileMessageId) => {
     const fileSystem = await getFileSystem(ctx);
     const targetDirectory = getDirectory(fileSystem, path);
     const fileContent = {
-        ...targetDirectory['.'].find((f) => f.name === fileName),
+        ...targetDirectory['.'].find((f) => f.messageId === parseInt(fileMessageId)),
+    };
+    return fileContent;
+};
+
+const deleteFile = async (ctx, path, fileMessageId) => {
+    const fileSystem = await getFileSystem(ctx);
+    const targetDirectory = getDirectory(fileSystem, path);
+    const fileContent = {
+        ...targetDirectory['.'].find((f) => f.messageId === parseInt(fileMessageId)),
     };
     if (fileContent) {
         fileSystem['/']['Trash']['.'].push(fileContent);
     }
     targetDirectory['.'] = targetDirectory['.'].filter(
-        (f) => f.name !== fileName
+        (f) => f.messageId !== parseInt(fileMessageId)
     );
     await storeFileSystem(ctx, fileSystem);
     return fileContent;
@@ -228,7 +237,6 @@ const renameFile = async (ctx, path, oldFileName, newFilename) => {
     const fileContent = targetDirectory['.'].find(
         (f) => f.name === oldFileName
     );
-    // console.log(fileContent, oldFileName, path);
     fileContent['name'] = newFilename + '.' + fileExtension;
     await storeFileSystem(ctx, fileSystem);
 };
@@ -255,6 +263,7 @@ module.exports = {
     getParentDirectoryPath,
     mkdir,
     saveFile,
+    getFile,
     deleteDirectory,
     deleteFile,
     renameFile,

@@ -393,12 +393,13 @@ bot.action(/^(.?$|[^\/].+)/, async (ctx) => {
     );
 });
 bot.action(/^\//, async (ctx) => {
-    const fileName = ctx.callbackQuery.data.split('/')[2];
     const action = ctx.session.action;
     const currentPath = helpers.getCurrentPath(ctx);
+    const fileMessageId = ctx.callbackQuery.data.split('/')[1];
+    const fileName = (await filesystem.getFile(ctx, currentPath, fileMessageId)).name;
     console.log('File action:', action);
     if (action === constants.DELETE_FILE_ACTION) {
-        const deletedFile = await filesystem.deleteFile(ctx, currentPath, fileName);
+        const deletedFile = await filesystem.deleteFile(ctx, currentPath, fileMessageId);
         ctx.session.action = null;
         ctx.session.currentPath = null;
         const message = `File *${fileName}* at \`${currentPath}\` DELETED`;
@@ -437,7 +438,6 @@ bot.action(/^\//, async (ctx) => {
             }
         );
     } else if (action === constants.EXPLORER_ACTION) {
-        const fileMessageId = ctx.callbackQuery.data.split('/')[1];
         try {
             if (fileMessageId) {
                 return await ctx.telegram.sendMessage(ctx.chat.id, `File: *${fileName}*\nPath: \`${currentPath}\``, {
