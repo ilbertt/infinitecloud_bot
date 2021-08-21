@@ -35,7 +35,7 @@ setBotToken('<your-api-bot-token>');
 
 ## How it works
 As mentioned above, the bot keeps track of your files using a "filesystem", which is a `json` file. To preserve your privacy, the filesystem file is stored **ONLY** in the chat.
-As soon as you start the chat, the bot sends you [this](src/initialFilesystem.json) file, which contains a predefined filesystem that you can change on your needs using the bot commands ([/mkdir](), [/rename_file](), [/move_file](), etc.).
+As soon as you start the chat, the bot sends you [this](res/initialFilesystem.json) file, which contains a predefined filesystem that you can change on your needs using the bot commands ([/mkdir](), [/rename_file](), [/move_file](), etc.).
 Whenever you make a change to the files, the bot fetches the filesystem from the chat, updates it and sends it again to the chat.
 ### Filesystem structure
 The filesystem has 2 main elements:
@@ -59,7 +59,7 @@ The filesystem has 2 main elements:
 The entire filesystem is contained inside the **Root** (`"/"`) directory, whose name isn't editable.
 
 ---
-So, an example of a filesystem (as found in [initialFilesystem.json](src/initialFilesystem.json) file) is:
+So, an example of a filesystem (as found in [initialFilesystem.json](res/initialFilesystem.json) file) is:
 ```javascript
 {
     "/": {
