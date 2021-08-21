@@ -477,7 +477,9 @@ bot.on('text', async (ctx) => {
 });
 
 bot.on('pinned_message', async (ctx) => {
-    return ctx.replyWithMarkdown(constants.pinnedMessageAlert(ctx.chat.id));
+    if (ctx.message.from.id !== ctx.botInfo.id) {
+        return ctx.replyWithMarkdown(constants.pinnedMessageAlert(ctx.chat.id));
+    }
 });
 
 bot.catch((err, ctx) => {
