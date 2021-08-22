@@ -6,6 +6,7 @@ const {
     fileActionPrefix,
     parentDirInlineButton,
     thisDirAction,
+    thisDirButtonText,
 } = require('./constants.js');
 
 const unpinOldFilesystem = async (ctx) => {
@@ -101,7 +102,7 @@ const getElementsInPath = (
     const elements = [];
     if (!hideCurrentDirectory) {
         elements.push({
-            name: 'HERE',
+            name: thisDirButtonText,
             action: thisDirAction,
         });
     }

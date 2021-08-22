@@ -10,7 +10,7 @@ const parentDirAction = '..';
 const mkdirAction = 'mkdir';
 const cancelAction = 'cancel';
 const backAction = 'back';
-const deleteAction = 'delete';
+const deleteDirAction = 'delete-dir';
 const SAVE_FILE_ACTION = 'save-file-action';
 const MKDIR_ACTION = 'mkdir-action';
 const WAIT_DIRECTORY_NAME = 'wait-directory-name';
@@ -24,26 +24,8 @@ const MOVE_FILE_ACTION = 'move-file-action';
 const RESTORE_FILESYSTEM_ACTION = 'restore-filesystem-action';
 const fileActionPrefix = '/';
 
-/* SYSTEM MESSAGES */
-const currentPathMessage = 'CURRENT PATH:\n';
-const saveFileMessage = 'SAVE FILE:\n';
-const createDirMessage = 'CREATE DIRECTORY:\n';
-const askDirectoryNameMessage = 'Input DIRECTORY name:\n';
-const askFileNameMessage = 'Input FILE name:\n';
-const deleteDirMessage = 'DELETE DIRECTORY:\n';
-const deleteFileMessage = 'DELETE FILE:\n';
-const moveFileMessage = 'MOVE FILE:\n';
-const restoreFilesystemMessage = 'Now send me the filesystem JSON file';
-
-const fileSystemNotFound = 'Filesystem not found';
-const fileSystemRestoredSuccess = 'Filesystem restored from this file.';
-const fileSystemRestoredError = 'Cannot restore filesystem from pinned message';
-const genericError = 'Error!\nUse one of the available commands instead:';
-
-const pinnedMessageAlert = (chatId) =>
-    `Please, make sure that the *last* pinned message is always the \`filesystem${chatId}.json\` file, otherwise _the bot won't work_!`;
-
 /* INLINE BUTTONS */
+const thisDirButtonText = 'HERE';
 const mkdirInlineButton = Markup.button.callback(
     '+ New Directory',
     mkdirAction
@@ -57,8 +39,48 @@ const cancelOperationInlineButton = Markup.button.callback(
 const backInlineButton = Markup.button.callback('<< Back', backAction);
 const deleteInlineButton = Markup.button.callback(
     '🗑️ DELETE THIS DIR',
-    deleteAction
+    deleteDirAction
 );
+
+/* SYSTEM MESSAGES */
+const currentPathMessage = 'CURRENT PATH:\n';
+
+const saveFileMessage = `\nNavigate to the directory in which you want to SAVE the file and click _${thisDirButtonText}_`;
+const deleteFileMessage = '\nSelect the file you want to DELETE';
+const selectMoveFileMessage = '\nSelect the file you want to MOVE';
+const moveFileMessage = (fileName) => `File to MOVE:\n*${fileName}*\nSelect the directory in which you want to move the file and click _${thisDirButtonText}_`;
+const renameFileMessage = '\nSelect the file you want to RENAME';
+const deletedFileFromTrash = `Here's the file, in case you want to *DELETE IT FOREVER* from this chat or *RESTORE* it by sending it again to this chat.`;
+
+const askFileNameMessage = '\nSend me the new FILE name';
+const askRenameFileName = (fileName, currentPath) => `RENAME *${fileName}* at \`${currentPath}\`\n\nSend me the new name:`;
+const askDirectoryNameMessage = '\nSend me the new DIRECTORY name';
+
+const createDirMessage = `\nNavigate to the directory in which you want to CREATE the new directory and click _${thisDirButtonText}_`;
+const deleteDirMessage = '\nSelect the directory you want to DELETE';
+
+const explorerFileMessage = (fileName, currentPath) => `File: *${fileName}*\nPath: \`${currentPath}\``;
+const savedFileSuccess = (fileName, currentPath) => `File *${fileName}* SAVED at \`${currentPath}\``;
+const deletedFileSuccess = (fileName, currentPath) => `File *${fileName}* at \`${currentPath}\` DELETED`;
+const renamedFileSuccess = (oldFileName, newFilename, currentPath) => `File *${oldFileName}* RENAMED.\nNew name: *${newFilename}*\nPath: \`${currentPath}\``;
+const movedFileSuccess = (fileName, previousPath, currentPath) => `MOVED *${fileName}*\nFrom: \`${previousPath}\`\nTo: \`${currentPath}\``;
+
+const createdDirectorySuccess = (dirName, currentPath) => `Directory *${dirName}* CREATED at \`${currentPath}\``;
+const deletedDirectorySuccess = (dirName, currentPath) => `Directory *${dirName}* at \`${currentPath}\` DELETED`;
+
+
+const restoreFilesystemMessage = 'Now send me the filesystem JSON file';
+const fileSystemNotFound = 'Filesystem not found';
+const fileSystemRestoredSuccess = 'Filesystem restored from this file.';
+const fileSystemRestoredError = 'Cannot restore filesystem.';
+const filesystemInfoMessage = (chatId, filesystemMessageId) => `Chat id: \`${chatId}\`\nFilesystem id: \`${filesystemMessageId}\``;
+
+const explorerFileError = 'File message not found';
+const genericError = 'Error!\nUse one of the available commands instead:';
+
+const forbiddenCharacterAlert = `Names cannot include *${fileActionPrefix}* character.\nRetry`;
+const pinnedMessageAlert = (chatId) =>
+    `Please, make sure that the *last* pinned message is always the \`filesystem${chatId}.json\` file, otherwise _the bot won't work_!`;
 
 module.exports = {
     dashboardUrl,
@@ -70,7 +92,7 @@ module.exports = {
     mkdirAction,
     cancelAction,
     backAction,
-    deleteAction,
+    deleteDirAction,
     SAVE_FILE_ACTION,
     MKDIR_ACTION,
     WAIT_DIRECTORY_NAME,
@@ -84,27 +106,49 @@ module.exports = {
     RESTORE_FILESYSTEM_ACTION,
     fileActionPrefix,
 
-    currentPathMessage,
-    saveFileMessage,
-    createDirMessage,
-    askDirectoryNameMessage,
-    askFileNameMessage,
-    deleteDirMessage,
-    deleteFileMessage,
-    moveFileMessage,
-    restoreFilesystemMessage,
-
-    fileSystemNotFound,
-    fileSystemRestoredSuccess,
-    fileSystemRestoredError,
-    genericError,
-
-    pinnedMessageAlert,
-
+    thisDirButtonText,
     mkdirInlineButton,
     parentDirInlineButton,
     thisDirInlineButton,
     cancelOperationInlineButton,
     backInlineButton,
     deleteInlineButton,
+
+    currentPathMessage,
+
+    saveFileMessage,
+    deleteFileMessage,
+    selectMoveFileMessage,
+    moveFileMessage,
+    renameFileMessage,
+    deletedFileFromTrash,
+    
+    askFileNameMessage,
+    askRenameFileName,
+    askDirectoryNameMessage,
+    
+    createDirMessage,
+    deleteDirMessage,
+    
+    explorerFileMessage,
+    savedFileSuccess,
+    deletedFileSuccess,
+    renamedFileSuccess,
+    movedFileSuccess,
+    
+    createdDirectorySuccess,
+    deletedDirectorySuccess,
+    
+    
+    restoreFilesystemMessage,
+    fileSystemNotFound,
+    fileSystemRestoredSuccess,
+    fileSystemRestoredError,
+    filesystemInfoMessage,
+    
+    explorerFileError,
+    genericError,
+
+    forbiddenCharacterAlert,
+    pinnedMessageAlert,
 };

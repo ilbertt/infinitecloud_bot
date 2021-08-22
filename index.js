@@ -9,8 +9,9 @@ const fileHandler = async (ctx, fileType) => {
     console.log('handling file of type:', fileType);
     const currentPath = helpers.getCurrentPath(ctx);
     ctx.session.action = constants.SAVE_FILE_ACTION;
+    const fileMessageId = ctx.message.message_id;
     ctx.session.saveFileData = {
-        messageId: ctx.message.message_id,
+        messageId: fileMessageId,
         extension: await helpers.getFileExtension(ctx, fileType),
     };
     const inlineKeyboardButtons = await filesystem.getKeyboardDirectories(
@@ -18,9 +19,10 @@ const fileHandler = async (ctx, fileType) => {
         currentPath
     );
     await ctx.replyWithMarkdown(
-        `${constants.saveFileMessage}${constants.currentPathMessage}\`/\``,
+        `${constants.currentPathMessage}\`${currentPath}\`\n${constants.saveFileMessage}`,
         {
             parse_mode: 'Markdown',
+            reply_to_message_id: fileMessageId,
             reply_markup: {
                 ...Markup.inlineKeyboard(inlineKeyboardButtons).reply_markup,
             },
@@ -33,6 +35,26 @@ const getGenericErrorWithCommands = async (ctx) => {
     const commands = await ctx.getMyCommands();
     const availableCommands = commands.map(cmd => `/${cmd.command} - ${cmd.description}`).join('\n');
     return `${constants.genericError}\n${availableCommands}`;
+};
+
+const getActionMessage = (action, fileName = '') => {
+    let message = '';
+    if (action === constants.MKDIR_ACTION) {
+        message = constants.createDirMessage;
+    } else if (action === constants.SAVE_FILE_ACTION) {
+        message = constants.saveFileMessage;
+    } else if (action === constants.DELETE_FILE_ACTION) {
+        message = constants.deleteFileMessage;
+    } else if (action === constants.DELETE_DIR_ACTION) {
+        message = constants.deleteDirMessage;
+    } else if (action === constants.RENAME_FILE_ACTION) {
+        message = constants.renameFileMessage;
+    } else if (action === constants.SELECT_MOVE_FILE_ACTION) {
+        message = constants.selectMoveFileMessage;
+    } else if (action === constants.MOVE_FILE_ACTION) {
+        message = constants.moveFileMessage(fileName);
+    }
+    return message;
 };
 
 const bot = new Telegraf('');
@@ -112,7 +134,7 @@ bot.command('mkdir', async (ctx) => {
         currentPath
     );
     return ctx.reply(
-        `${constants.createDirMessage}${constants.currentPathMessage}\`${currentPath}\``,
+        `${constants.currentPathMessage}\`${currentPath}\`\n${constants.createDirMessage}`,
         {
             parse_mode: 'Markdown',
             reply_markup: {
@@ -131,7 +153,7 @@ bot.command('explorer', async (ctx) => {
         true
     );
     // inlineKeyboardButtons.push(mkdirInlineButton);
-    ctx.replyWithMarkdown(`${constants.currentPathMessage}\`/\``, {
+    ctx.replyWithMarkdown(`${constants.currentPathMessage}\`${currentPath}\``, {
         parse_mode: 'Markdown',
         reply_markup: {
             ...Markup.inlineKeyboard(inlineKeyboardButtons).reply_markup,
@@ -150,7 +172,7 @@ bot.command('rename_file', async (ctx) => {
         true
     );
     // inlineKeyboardButtons.push(mkdirInlineButton);
-    ctx.replyWithMarkdown(`${constants.currentPathMessage}\`/\``, {
+    ctx.replyWithMarkdown(`${constants.currentPathMessage}\`${currentPath}\`\n${constants.renameFileMessage}`, {
         parse_mode: 'Markdown',
         reply_markup: {
             ...Markup.inlineKeyboard(inlineKeyboardButtons).reply_markup,
@@ -169,7 +191,7 @@ bot.command('move_file', async (ctx) => {
         true
     );
     // inlineKeyboardButtons.push(mkdirInlineButton);
-    ctx.replyWithMarkdown(`${constants.currentPathMessage}\`/\``, {
+    ctx.replyWithMarkdown(`${constants.currentPathMessage}\`${currentPath}\`\n${constants.selectMoveFileMessage}`, {
         parse_mode: 'Markdown',
         reply_markup: {
             ...Markup.inlineKeyboard(inlineKeyboardButtons).reply_markup,
@@ -189,7 +211,7 @@ bot.command('delete_dir', async (ctx) => {
         true
     );
     ctx.replyWithMarkdown(
-        `${constants.deleteDirMessage}${constants.currentPathMessage}\`/\``,
+        `${constants.currentPathMessage}\`${currentPath}\`\n${constants.deleteDirMessage}`,
         {
             parse_mode: 'Markdown',
             reply_markup: {
@@ -209,7 +231,7 @@ bot.command('delete_file', async (ctx) => {
         true
     );
     ctx.replyWithMarkdown(
-        `${constants.deleteFileMessage}${constants.currentPathMessage}\`/\``,
+        `${constants.currentPathMessage}\`${currentPath}\`\n${constants.deleteFileMessage}`,
         {
             parse_mode: 'Markdown',
             reply_markup: {
@@ -223,8 +245,7 @@ bot.command('filesystem', async (ctx) => {
     const chat = await ctx.getChat();
     const fileSystemMessage = chat.pinned_message;
     if (fileSystemMessage) {
-        return ctx.replyWithMarkdown(
-            `Chat id: \`${chat.id}\`\nFilesystem id: \`${fileSystemMessage.message_id}\``,
+        return ctx.replyWithMarkdown(constants.filesystemInfoMessage(chat.id, fileSystemMessage.message_id),
             {
                 reply_to_message_id: fileSystemMessage.message_id,
             }
@@ -249,18 +270,16 @@ bot.action(constants.thisDirAction, async (ctx) => {
     } else if (action === constants.MOVE_FILE_ACTION) {
         const sourcePath = ctx.session.oldPath;
         const fileName = ctx.session.fileToHandle;
-        filesystem.moveFile(ctx, sourcePath, currentPath, fileName);
+        await filesystem.moveFile(ctx, sourcePath, currentPath, fileName);
         ctx.session.action = null;
         ctx.session.fileToHandle = null;
         ctx.session.oldPath = null;
         ctx.session.currentPath = null;
-        return ctx.replyWithMarkdown(
-            `Moved *${fileName}*\nfrom \`${sourcePath}\`\nto \`${currentPath}\``
-        );
+        return ctx.replyWithMarkdown(constants.movedFileSuccess(fileName, sourcePath, currentPath));
     }
     if (message) {
         return ctx.editMessageText(
-            `${message}${constants.currentPathMessage}\`${currentPath}\``,
+            `${constants.currentPathMessage}\`${currentPath}\`\n${message}`,
             {
                 parse_mode: 'Markdown',
                 reply_markup: {
@@ -286,20 +305,11 @@ bot.action(constants.parentDirAction, async (ctx) => {
         action !== constants.SAVE_FILE_ACTION && action !== constants.MKDIR_ACTION && action !== constants.MOVE_FILE_ACTION
     );
 
-    let message = '';
-    if (action === constants.MKDIR_ACTION) {
-        message = constants.createDirMessage;
-    } else if (action === constants.SAVE_FILE_ACTION) {
-        message = constants.saveFileMessage;
-    } else if (action === constants.DELETE_FILE_ACTION) {
-        message = constants.deleteFileMessage;
-    } else if (action === constants.DELETE_DIR_ACTION) {
-        message = constants.deleteDirMessage;
-    }
+    const message = getActionMessage(action, ctx.session.fileToHandle);
 
     if (message || action === constants.EXPLORER_ACTION) {
         return ctx.editMessageText(
-            `${message}${constants.currentPathMessage}\`${newCurrentPath}\``,
+            `${constants.currentPathMessage}\`${newCurrentPath}\`\n${message}`,
             {
                 parse_mode: 'Markdown',
                 reply_markup: {
@@ -314,12 +324,7 @@ bot.action(constants.parentDirAction, async (ctx) => {
 bot.action(constants.backAction, async (ctx) => {
     const action = ctx.session.action;
 
-    let message = '';
-    if (action === constants.MKDIR_ACTION) {
-        message = constants.createDirMessage;
-    } else if (action === constants.SAVE_FILE_ACTION) {
-        message = constants.saveFileMessage;
-    }
+    const message = getActionMessage(action, ctx.session.fileToHandle);
 
     ctx.session.waitReply = null;
 
@@ -330,7 +335,7 @@ bot.action(constants.backAction, async (ctx) => {
             currentPath
         );
         return ctx.editMessageText(
-            `${message}${constants.currentPathMessage}\`${currentPath}\``,
+            `${constants.currentPathMessage}\`${currentPath}\`\n${message}`,
             {
                 parse_mode: 'Markdown',
                 reply_markup: {
@@ -342,7 +347,7 @@ bot.action(constants.backAction, async (ctx) => {
         return ctx.reply(await getGenericErrorWithCommands(ctx));
     }
 });
-bot.action(constants.deleteAction, async (ctx) => {
+bot.action(constants.deleteDirAction, async (ctx) => {
     const currentPath = helpers.getCurrentPath(ctx); // format /parentDir/.../childDir/currentDir/
     const directoryName = currentPath.split('/').slice(0, -1).pop();
     const targetPath = currentPath.split(directoryName + '/')[0];
@@ -351,9 +356,7 @@ bot.action(constants.deleteAction, async (ctx) => {
     await filesystem.deleteDirectory(ctx, targetPath, directoryName);
     ctx.session.action = null;
     ctx.session.currentPath = null;
-    return ctx.replyWithMarkdown(
-        `Directory *${directoryName}* at \`${targetPath}\` DELETED`
-    );
+    return ctx.replyWithMarkdown(constants.deletedDirectorySuccess(directoryName, targetPath));
 });
 bot.action(/^(.?$|[^\/].+)/, async (ctx) => {
     // DIRECTORY action
@@ -376,17 +379,10 @@ bot.action(/^(.?$|[^\/].+)/, async (ctx) => {
         action === constants.DELETE_DIR_ACTION
     );
 
-    let message = '';
-    if (action === constants.MKDIR_ACTION) {
-        message = constants.createDirMessage;
-    } else if (action === constants.SAVE_FILE_ACTION) {
-        message = constants.saveFileMessage;
-    } else if (action === constants.MOVE_FILE_ACTION) {
-        message = `${constants.moveFileMessage}*${ctx.session.fileToHandle}*\n`;
-    }
+    const message = getActionMessage(action, ctx.session.fileToHandle);
 
     return ctx.editMessageText(
-        `${message}${constants.currentPathMessage}\`${newCurrentPath}\``,
+        `${constants.currentPathMessage}\`${newCurrentPath}\`\n${message}`,
         {
             parse_mode: 'Markdown',
             reply_markup: {
@@ -406,10 +402,10 @@ bot.action(/^\//, async (ctx) => {
         const deletedFile = await filesystem.deleteFile(ctx, currentPath, fileMessageId);
         ctx.session.action = null;
         ctx.session.currentPath = null;
-        const message = `File *${fileName}* at \`${currentPath}\` DELETED`;
+        const message = constants.deletedFileSuccess(fileName, currentPath);
         if (currentPath.startsWith('/Trash')) {
             return ctx.replyWithMarkdown(
-                `${message}\n\nHere's the file, in case you want to *DELETE IT FOREVER* from this chat or *RESTORE* it by forwarding it again to this chat.`,
+                `${message}\n\n${constants.deletedFileFromTrash}`,
                 {
                     reply_to_message_id: deletedFile.messageId,
                 }
@@ -419,20 +415,18 @@ bot.action(/^\//, async (ctx) => {
     } else if (action === constants.RENAME_FILE_ACTION) {
         ctx.session.waitReply = constants.WAIT_FILE_NAME;
         ctx.session.fileToHandle = fileName;
-        return ctx.replyWithMarkdown(
-            `Rename *${fileName}* at \`${currentPath}\` \nInsert new name:`
-        );
+        return ctx.replyWithMarkdown(constants.askRenameFileName(fileName, currentPath));
     } else if (action === constants.SELECT_MOVE_FILE_ACTION) {
         ctx.session.fileToHandle = fileName;
         ctx.session.oldPath = currentPath;
         ctx.session.action = constants.MOVE_FILE_ACTION;
-        const message = constants.moveFileMessage + fileName + '\n';
+        const message = constants.moveFileMessage(fileName);
         const inlineKeyboardButtons = await filesystem.getKeyboardDirectories(
             ctx,
             currentPath
         );
         return ctx.editMessageText(
-            `${message}${constants.currentPathMessage}\`${currentPath}\``,
+            `${constants.currentPathMessage}\`${currentPath}\`\n${message}`,
             {
                 parse_mode: 'Markdown',
                 reply_markup: {
@@ -444,12 +438,12 @@ bot.action(/^\//, async (ctx) => {
     } else if (action === constants.EXPLORER_ACTION) {
         try {
             if (fileMessageId) {
-                return await ctx.telegram.sendMessage(ctx.chat.id, `File: *${fileName}*\nPath: \`${currentPath}\``, {
+                return await ctx.telegram.sendMessage(ctx.chat.id, constants.explorerFileMessage(fileName, currentPath), {
                     parse_mode: 'Markdown',
                     reply_to_message_id: fileMessageId,
                 });
             } else {
-                throw new Error('File message not found');
+                throw new Error(constants.explorerFileError);
             }
         } catch (err) {
             return await ctx.reply('Error: ' + err.message);
@@ -465,7 +459,7 @@ bot.on('text', async (ctx) => {
     if(waitReply) {
         let message = 'Error';
         if (reply.includes(constants.fileActionPrefix)) {
-            message = `Names cannot include *${constants.fileActionPrefix}* character.\nRetry`;
+            message = constants.forbiddenCharacterAlert;
         } else {
             if (waitReply === constants.WAIT_FILE_NAME) {
                 if (action === constants.SAVE_FILE_ACTION) {
@@ -475,17 +469,17 @@ bot.on('text', async (ctx) => {
                     const fileName = reply + fileExtension;
                     await filesystem.saveFile(ctx, currentPath, fileName, messageId);
                     ctx.session.saveFileData = null;
-                    message = `File *${fileName}* saved at \`${currentPath}\``;
+                    message = constants.savedFileSuccess(fileName, currentPath);
                 } else if (action === constants.RENAME_FILE_ACTION) {
                     const oldFileName = ctx.session.fileToHandle;
-                    filesystem.renameFile(ctx, currentPath, oldFileName, reply);
+                    await filesystem.renameFile(ctx, currentPath, oldFileName, reply);
                     ctx.session.fileToHandle = null;
                     const fileExtension = oldFileName.split('.').pop();
-                    message = `File *${oldFileName}* renamed.\nNew name: *${reply}.${fileExtension}*\nPath: \`${currentPath}\``;
+                    message = constants.renamedFileSuccess(oldFileName, `${reply}.${fileExtension}`, currentPath);
                 }
             } else if (waitReply === constants.WAIT_DIRECTORY_NAME) {
                 await filesystem.mkdir(ctx, currentPath, reply);
-                message = `Directory *${reply}* created at \`${currentPath}\``;
+                message = constants.createdDirectorySuccess(reply, currentPath);
             }
             helpers.setCurrentPath(ctx, '/');
             ctx.session.waitReply = null;
