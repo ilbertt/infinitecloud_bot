@@ -75,7 +75,7 @@ bot.start(async (ctx) => {
 bot.help((ctx) => {
     return ctx.replyWithMarkdown(helpers.getHelpMessage());;
 });
-bot.command('info', (ctx) => {
+bot.command(constants.COMMANDS.info, (ctx) => {
     return ctx.replyWithMarkdown(constants.botInfo);
 });
 
@@ -126,7 +126,7 @@ bot.on('voice', async (ctx) => {
 });
 /* --- */
 
-bot.command('mkdir', async (ctx) => {
+bot.command(constants.COMMANDS.mkdir, async (ctx) => {
     const currentPath = helpers.getCurrentPath(ctx);
     ctx.session.action = constants.MKDIR_ACTION;
     const inlineKeyboardButtons = await filesystem.getKeyboardDirectories(
@@ -143,7 +143,7 @@ bot.command('mkdir', async (ctx) => {
         }
     );
 });
-bot.command('explorer', async (ctx) => {
+bot.command(constants.COMMANDS.explorer, async (ctx) => {
     const currentPath = helpers.getCurrentPath(ctx);
     ctx.session.action = constants.EXPLORER_ACTION;
     const inlineKeyboardButtons = await filesystem.getKeyboardDirectories(
@@ -162,7 +162,7 @@ bot.command('explorer', async (ctx) => {
     return;
 });
 
-bot.command('rename_file', async (ctx) => {
+bot.command(constants.COMMANDS.rename_file, async (ctx) => {
     const currentPath = helpers.getCurrentPath(ctx);
     ctx.session.action = constants.RENAME_FILE_ACTION;
     const inlineKeyboardButtons = await filesystem.getKeyboardDirectories(
@@ -181,7 +181,7 @@ bot.command('rename_file', async (ctx) => {
     return;
 });
 
-bot.command('move_file', async (ctx) => {
+bot.command(constants.COMMANDS.move_file, async (ctx) => {
     const currentPath = helpers.getCurrentPath(ctx);
     ctx.session.action = constants.SELECT_MOVE_FILE_ACTION;
     const inlineKeyboardButtons = await filesystem.getKeyboardDirectories(
@@ -200,7 +200,7 @@ bot.command('move_file', async (ctx) => {
     return;
 });
 
-bot.command('delete_dir', async (ctx) => {
+bot.command(constants.COMMANDS.delete_dir, async (ctx) => {
     const currentPath = helpers.getCurrentPath(ctx);
     ctx.session.action = constants.DELETE_DIR_ACTION;
     const inlineKeyboardButtons = await filesystem.getKeyboardDirectories(
@@ -221,7 +221,7 @@ bot.command('delete_dir', async (ctx) => {
     );
     return;
 });
-bot.command('delete_file', async (ctx) => {
+bot.command(constants.COMMANDS.delete_file, async (ctx) => {
     const currentPath = helpers.getCurrentPath(ctx);
     ctx.session.action = constants.DELETE_FILE_ACTION;
     const inlineKeyboardButtons = await filesystem.getKeyboardDirectories(
@@ -241,7 +241,7 @@ bot.command('delete_file', async (ctx) => {
     );
     return;
 });
-bot.command('filesystem', async (ctx) => {
+bot.command(constants.COMMANDS.filesystem, async (ctx) => {
     const chat = await ctx.getChat();
     const fileSystemMessage = chat.pinned_message;
     if (fileSystemMessage) {
@@ -253,7 +253,7 @@ bot.command('filesystem', async (ctx) => {
     }
     return ctx.reply(constants.fileSystemNotFound);
 });
-bot.command('restore_filesystem', async (ctx) => {
+bot.command(constants.COMMANDS.restore_filesystem, async (ctx) => {
     ctx.session.action = constants.RESTORE_FILESYSTEM_ACTION;
     return ctx.reply(constants.restoreFilesystemMessage);
 });

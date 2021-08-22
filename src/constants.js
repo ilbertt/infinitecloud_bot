@@ -4,6 +4,20 @@ const dashboardUrl = 'https://infinitecloud-website-api.web.app/';
 const githubUrl = 'https://github.com/Luca8991/infinitecloud_bot';
 const botInfo = `*Infinite Cloud Bot* - infinite free cloud storage on Telegram\n\nUsage instructions: /help\nDashboard: ${dashboardUrl}\n\nMore info and source code: [${githubUrl}](${githubUrl})`;
 
+/* COMMANDS */
+const COMMANDS = {
+    mkdir: 'mkdir',
+    explorer: 'explorer',
+    delete_dir: 'delete_dir',
+    delete_file: 'delete_file',
+    rename_file: 'rename_file',
+    move_file: 'move_file',
+    restore_filesystem: 'restore_filesystem',
+    filesystem: 'filesystem',
+    info: 'info',
+    help: 'help',
+};
+
 /* ACTIONS */
 const thisDirAction = '.';
 const parentDirAction = '..';
@@ -86,6 +100,8 @@ module.exports = {
     dashboardUrl,
     githubUrl,
     botInfo,
+
+    COMMANDS,
 
     thisDirAction,
     parentDirAction,
