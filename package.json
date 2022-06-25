@@ -1,6 +1,6 @@
 {
     "name": "infinitecloud_bot",
-    "version": "0.0.1",
+    "version": "0.0.5",
     "description": "Your infinite cloud on Telegram",
     "main": "index.js",
     "scripts": {

@@ -1,4 +1,7 @@
 const fs = require('fs');
+const pjson = require('../package.json');
+
+console.log('VERSION', pjson.version);
 
 module.exports.getCurrentPath = (ctx) => {
     return ctx.session.currentPath ? ctx.session.currentPath : '/';
@@ -45,4 +48,8 @@ module.exports.getHelpMessage = () => {
     } catch (e) {
         return 'Help in not available.';
     }
+};
+
+module.exports.getBotVersion = () => {
+    return pjson.version;
 };

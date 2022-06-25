@@ -76,7 +76,7 @@ bot.help((ctx) => {
     return ctx.replyWithMarkdown(helpers.getHelpMessage());;
 });
 bot.command(constants.COMMANDS.info, (ctx) => {
-    return ctx.replyWithMarkdown(constants.botInfo);
+    return ctx.replyWithMarkdown(`${constants.botInfo}\n\n_Version: ${helpers.getBotVersion()}_`);
 });
 
 /* FILE HANDLERS */
