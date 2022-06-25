@@ -1,0 +1,11 @@
+version: '3.8'
+services:
+  infinitecloud_bot:
+    build:
+      context: .
+    container_name: infinitecloud_bot
+    env_file:
+      - .env
+    deploy:
+      restart_policy:
+        condition: on-failure

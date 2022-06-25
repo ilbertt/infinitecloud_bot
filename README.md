@@ -9,15 +9,30 @@ Just start a chat with [@infinitecloud_bot](https://t.me/infinitecloud_bot) on T
 ### Run the bot on your server
 #### Prerequisites
 Make sure you have `Node.js (14.x)` and `npm` installed, you have created a Telegram Bot ([instructions](https://core.telegram.org/bots#3-how-do-i-create-a-bot)) and obtained a Telegram Bot API token.
-#### Install & Run
+#### Install
 1. `git clone https://github.com/Luca8991/infinitecloud_bot.git`
 2. `cd infinitecloud_bot`
 3. create a file named `.env` and add this line inside:
 ```
 BOT_TOKEN=<your-telegram-bot-api-token>
 ```
-4. `npm install` (to install all dependencies)
-5. run with: `node index.js`
+
+#### Run
+
+At this point, you can choose to run it directly on your machine or as a Docker container.
+
+**Run directly on your machine:**
+
+1. `npm install` (to install all dependencies)
+2. run with: `node index.js`
+
+**Run as a Docker container:**
+
+Make sure you have Docker and Docker Compose installed on your machine (instructions can be found on [Docker docs](https://docs.docker.com/)).
+
+1. `docker-compose up -d --build` (to build the image and start the bot)
+
+If you want to shut it down, simply run: `docker-compose down`.
 
 ### Use as javascript package
 1. `npm install https://github.com/Luca8991/infinitecloud_bot` or clone this repo and install locally (`npm install /path/to/cloned/repo`)
