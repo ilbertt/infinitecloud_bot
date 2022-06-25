@@ -16,7 +16,9 @@ const unpinOldFilesystem = async (ctx) => {
     if (rootMessage) {
         try {
             await ctx.unpinChatMessage(rootMessage.message_id);
-        } catch (err) {}
+        } catch (err) {
+            console.error('ERROR: Cannot unpin message', err);
+        }
     }
 };
 

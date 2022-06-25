@@ -18,7 +18,7 @@ const fileHandler = async (ctx, fileType) => {
         ctx,
         currentPath
     );
-    await ctx.replyWithMarkdown(
+    return await ctx.replyWithMarkdown(
         `${constants.currentPathMessage}\`${currentPath}\`\n${constants.saveFileMessage}`,
         {
             parse_mode: 'Markdown',
@@ -28,7 +28,6 @@ const fileHandler = async (ctx, fileType) => {
             },
         }
     );
-    return;
 };
 
 const getGenericErrorWithCommands = async (ctx) => {
@@ -69,58 +68,70 @@ bot.start(async (ctx) => {
     }
     const botHelp = helpers.getHelpMessage();
     msg = msg + `\n-----\nHere's some help to start:\n${botHelp}`;
-    ctx.replyWithMarkdown(msg);
+    await ctx.replyWithMarkdown(msg);
     return await filesystem.initializeFileSystem(ctx);
 });
-bot.help((ctx) => {
-    return ctx.replyWithMarkdown(helpers.getHelpMessage());;
+
+bot.help(async (ctx) => {
+    return await ctx.replyWithMarkdown(helpers.getHelpMessage());
 });
-bot.command(constants.COMMANDS.info, (ctx) => {
-    return ctx.replyWithMarkdown(`${constants.botInfo}\n\n_Version: ${helpers.getBotVersion()}_`);
+
+bot.command(constants.COMMANDS.info, async (ctx) => {
+    return await ctx.replyWithMarkdown(`${constants.botInfo}\n\n_Version: ${helpers.getBotVersion()}_`);
 });
 
 /* FILE HANDLERS */
 bot.on('animation', async (ctx) => {
     return await fileHandler(ctx, 'animation');
 });
+
 bot.on('audio', async (ctx) => {
     return await fileHandler(ctx, 'audio');
 });
+
 bot.on('contact', async (ctx) => {
     return await fileHandler(ctx, 'contact');
 });
+
 bot.on('document', async (ctx) => {
     if (ctx.session.action === constants.RESTORE_FILESYSTEM_ACTION) {
         try {
             await filesystem.restoreFilesystem(ctx);
-            return ctx.reply(constants.fileSystemRestoredSuccess, {
+            return await ctx.reply(constants.fileSystemRestoredSuccess, {
                 reply_to_message_id: ctx.message.message_id,
             });
         } catch (e) {
             console.log(e);
-            return ctx.reply(constants.fileSystemRestoredError);
+            return await ctx.reply(constants.fileSystemRestoredError);
         }
     }
     return await fileHandler(ctx, 'document');
 });
+
 bot.on('location', async (ctx) => {
     return await fileHandler(ctx, 'location');
 });
+
 bot.on('photo', async (ctx) => {
     return await fileHandler(ctx, 'photo');
 });
+
 bot.on('poll', async (ctx) => {
     return await fileHandler(ctx, 'poll');
 });
+
 bot.on('sticker', async (ctx) => {
     return await fileHandler(ctx, 'sticker');
 });
+
 bot.on('video', async (ctx) => {
     return await fileHandler(ctx, 'video');
 });
+
 bot.on('video_note', async (ctx) => {
     return await fileHandler(ctx, 'video_note');
 });
+
 bot.on('voice', async (ctx) => {
     return await fileHandler(ctx, 'voice');
 });
@@ -133,7 +144,7 @@ bot.command(constants.COMMANDS.mkdir, async (ctx) => {
         ctx,
         currentPath
     );
-    return ctx.reply(
+    return await ctx.reply(
         `${constants.currentPathMessage}\`${currentPath}\`\n${constants.createDirMessage}`,
         {
             parse_mode: 'Markdown',
@@ -143,6 +154,7 @@ bot.command(constants.COMMANDS.mkdir, async (ctx) => {
         }
     );
 });
+
 bot.command(constants.COMMANDS.explorer, async (ctx) => {
     const currentPath = helpers.getCurrentPath(ctx);
     ctx.session.action = constants.EXPLORER_ACTION;
@@ -153,13 +165,12 @@ bot.command(constants.COMMANDS.explorer, async (ctx) => {
         true
     );
     // inlineKeyboardButtons.push(mkdirInlineButton);
-    ctx.replyWithMarkdown(`${constants.currentPathMessage}\`${currentPath}\``, {
+    return await ctx.replyWithMarkdown(`${constants.currentPathMessage}\`${currentPath}\``, {
         parse_mode: 'Markdown',
         reply_markup: {
             ...Markup.inlineKeyboard(inlineKeyboardButtons).reply_markup,
         },
     });
-    return;
 });
 
 bot.command(constants.COMMANDS.rename_file, async (ctx) => {
@@ -172,13 +183,12 @@ bot.command(constants.COMMANDS.rename_file, async (ctx) => {
         true
     );
     // inlineKeyboardButtons.push(mkdirInlineButton);
-    ctx.replyWithMarkdown(`${constants.currentPathMessage}\`${currentPath}\`\n${constants.renameFileMessage}`, {
+    return await ctx.replyWithMarkdown(`${constants.currentPathMessage}\`${currentPath}\`\n${constants.renameFileMessage}`, {
         parse_mode: 'Markdown',
         reply_markup: {
             ...Markup.inlineKeyboard(inlineKeyboardButtons).reply_markup,
         },
     });
-    return;
 });
 
 bot.command(constants.COMMANDS.move_file, async (ctx) => {
@@ -191,13 +201,12 @@ bot.command(constants.COMMANDS.move_file, async (ctx) => {
         true
     );
     // inlineKeyboardButtons.push(mkdirInlineButton);
-    ctx.replyWithMarkdown(`${constants.currentPathMessage}\`${currentPath}\`\n${constants.selectMoveFileMessage}`, {
+    return await ctx.replyWithMarkdown(`${constants.currentPathMessage}\`${currentPath}\`\n${constants.selectMoveFileMessage}`, {
         parse_mode: 'Markdown',
         reply_markup: {
             ...Markup.inlineKeyboard(inlineKeyboardButtons).reply_markup,
         },
     });
-    return;
 });
 
 bot.command(constants.COMMANDS.delete_dir, async (ctx) => {
@@ -210,7 +219,7 @@ bot.command(constants.COMMANDS.delete_dir, async (ctx) => {
         true,
         true
     );
-    ctx.replyWithMarkdown(
+    return await ctx.replyWithMarkdown(
         `${constants.currentPathMessage}\`${currentPath}\`\n${constants.deleteDirMessage}`,
         {
             parse_mode: 'Markdown',
@@ -219,8 +228,8 @@ bot.command(constants.COMMANDS.delete_dir, async (ctx) => {
             },
         }
     );
-    return;
 });
+
 bot.command(constants.COMMANDS.delete_file, async (ctx) => {
     const currentPath = helpers.getCurrentPath(ctx);
     ctx.session.action = constants.DELETE_FILE_ACTION;
@@ -230,7 +239,7 @@ bot.command(constants.COMMANDS.delete_file, async (ctx) => {
         true,
         true
     );
-    ctx.replyWithMarkdown(
+    return await ctx.replyWithMarkdown(
         `${constants.currentPathMessage}\`${currentPath}\`\n${constants.deleteFileMessage}`,
         {
             parse_mode: 'Markdown',
@@ -239,24 +248,26 @@ bot.command(constants.COMMANDS.delete_file, async (ctx) => {
             },
         }
     );
-    return;
 });
+
 bot.command(constants.COMMANDS.filesystem, async (ctx) => {
     const chat = await ctx.getChat();
     const fileSystemMessage = chat.pinned_message;
     if (fileSystemMessage) {
-        return ctx.replyWithMarkdown(constants.filesystemInfoMessage(chat.id, fileSystemMessage.message_id),
+        return await ctx.replyWithMarkdown(constants.filesystemInfoMessage(chat.id, fileSystemMessage.message_id),
             {
                 reply_to_message_id: fileSystemMessage.message_id,
             }
         );
     }
-    return ctx.reply(constants.fileSystemNotFound);
+    return await ctx.reply(constants.fileSystemNotFound);
 });
+
 bot.command(constants.COMMANDS.restore_filesystem, async (ctx) => {
     ctx.session.action = constants.RESTORE_FILESYSTEM_ACTION;
-    return ctx.reply(constants.restoreFilesystemMessage);
+    return await ctx.reply(constants.restoreFilesystemMessage);
 });
+
 bot.action(constants.thisDirAction, async (ctx) => {
     const currentPath = helpers.getCurrentPath(ctx);
     const action = ctx.session.action;
@@ -275,8 +286,9 @@ bot.action(constants.thisDirAction, async (ctx) => {
         ctx.session.fileToHandle = null;
         ctx.session.oldPath = null;
         ctx.session.currentPath = null;
-        return ctx.replyWithMarkdown(constants.movedFileSuccess(fileName, sourcePath, currentPath));
+        return await ctx.replyWithMarkdown(constants.movedFileSuccess(fileName, sourcePath, currentPath));
     }
+
     if (message) {
         return ctx.editMessageText(
             `${constants.currentPathMessage}\`${currentPath}\`\n${message}`,
@@ -290,9 +302,10 @@ bot.action(constants.thisDirAction, async (ctx) => {
             }
         );
     } else {
-        return ctx.reply(await getGenericErrorWithCommands(ctx));
+        return await ctx.reply(await getGenericErrorWithCommands(ctx));
     }
 });
+
 bot.action(constants.parentDirAction, async (ctx) => {
     const currentPath = helpers.getCurrentPath(ctx);
     const action = ctx.session.action;
@@ -318,9 +331,10 @@ bot.action(constants.parentDirAction, async (ctx) => {
             }
         );
     } else {
-        return ctx.reply(await getGenericErrorWithCommands(ctx));
+        return await ctx.reply(await getGenericErrorWithCommands(ctx));
     }
 });
+
 bot.action(constants.backAction, async (ctx) => {
     const action = ctx.session.action;
 
@@ -344,9 +358,10 @@ bot.action(constants.backAction, async (ctx) => {
             }
         );
     } else {
-        return ctx.reply(await getGenericErrorWithCommands(ctx));
+        return await ctx.reply(await getGenericErrorWithCommands(ctx));
     }
 });
+
 bot.action(constants.deleteDirAction, async (ctx) => {
     const currentPath = helpers.getCurrentPath(ctx); // format /parentDir/.../childDir/currentDir/
     const directoryName = currentPath.split('/').slice(0, -1).pop();
@@ -356,8 +371,9 @@ bot.action(constants.deleteDirAction, async (ctx) => {
     await filesystem.deleteDirectory(ctx, targetPath, directoryName);
     ctx.session.action = null;
     ctx.session.currentPath = null;
-    return ctx.replyWithMarkdown(constants.deletedDirectorySuccess(directoryName, targetPath));
+    return await ctx.replyWithMarkdown(constants.deletedDirectorySuccess(directoryName, targetPath));
 });
+
 bot.action(/^(.?$|[^\/].+)/, async (ctx) => {
     // DIRECTORY action
     const action = ctx.session.action;
@@ -369,13 +385,13 @@ bot.action(/^(.?$|[^\/].+)/, async (ctx) => {
         ctx,
         newCurrentPath,
         action === constants.EXPLORER_ACTION ||
-            action === constants.DELETE_DIR_ACTION ||
-            action === constants.RENAME_FILE_ACTION ||
-            action === constants.SELECT_MOVE_FILE_ACTION,
+        action === constants.DELETE_DIR_ACTION ||
+        action === constants.RENAME_FILE_ACTION ||
+        action === constants.SELECT_MOVE_FILE_ACTION,
         action === constants.EXPLORER_ACTION ||
-            action === constants.DELETE_FILE_ACTION ||
-            action === constants.RENAME_FILE_ACTION ||
-            action === constants.SELECT_MOVE_FILE_ACTION,
+        action === constants.DELETE_FILE_ACTION ||
+        action === constants.RENAME_FILE_ACTION ||
+        action === constants.SELECT_MOVE_FILE_ACTION,
         action === constants.DELETE_DIR_ACTION
     );
 
@@ -391,6 +407,7 @@ bot.action(/^(.?$|[^\/].+)/, async (ctx) => {
         }
     );
 });
+
 bot.action(/^\//, async (ctx) => {
     // FILE action
     const action = ctx.session.action;
@@ -404,18 +421,18 @@ bot.action(/^\//, async (ctx) => {
         ctx.session.currentPath = null;
         const message = constants.deletedFileSuccess(fileName, currentPath);
         if (currentPath.startsWith('/Trash')) {
-            return ctx.replyWithMarkdown(
+            return await ctx.replyWithMarkdown(
                 `${message}\n\n${constants.deletedFileFromTrash}`,
                 {
                     reply_to_message_id: deletedFile.messageId,
                 }
             );
         }
-        return ctx.replyWithMarkdown(message);
+        return await ctx.replyWithMarkdown(message);
     } else if (action === constants.RENAME_FILE_ACTION) {
         ctx.session.waitReply = constants.WAIT_FILE_NAME;
         ctx.session.fileToHandle = fileName;
-        return ctx.replyWithMarkdown(constants.askRenameFileName(fileName, currentPath));
+        return await ctx.replyWithMarkdown(constants.askRenameFileName(fileName, currentPath));
     } else if (action === constants.SELECT_MOVE_FILE_ACTION) {
         ctx.session.fileToHandle = fileName;
         ctx.session.oldPath = currentPath;
@@ -450,13 +467,14 @@ bot.action(/^\//, async (ctx) => {
         }
     }
 });
+
 bot.on('text', async (ctx) => {
     const currentPath = helpers.getCurrentPath(ctx);
     const waitReply = ctx.session.waitReply;
     const reply = ctx.message.text;
     const action = ctx.session.action;
 
-    if(waitReply) {
+    if (waitReply) {
         let message = 'Error';
         if (reply.includes(constants.fileActionPrefix)) {
             message = constants.forbiddenCharacterAlert;
@@ -493,12 +511,16 @@ bot.on('text', async (ctx) => {
 
 bot.on('pinned_message', async (ctx) => {
     if (ctx.message.from.id !== ctx.botInfo.id) {
-        return ctx.replyWithMarkdown(constants.pinnedMessageAlert(ctx.chat.id));
+        return await ctx.replyWithMarkdown(constants.pinnedMessageAlert(ctx.chat.id));
     }
 });
 
-bot.catch((err, ctx) => {
-	return ctx.reply(`Ooops, encountered an error for ${ctx.updateType}`, err);
+bot.catch(async (err, ctx) => {
+    try {
+        return await ctx.reply(`Ooops, encountered an error for ${ctx.updateType}`, err);
+    } catch (err) {
+        console.error('ERROR: ', err);
+    }
 });
 
 // Enable graceful stop
