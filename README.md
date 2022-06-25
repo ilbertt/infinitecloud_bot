@@ -32,6 +32,8 @@ Make sure you have Docker and Docker Compose installed on your machine (instruct
 
 1. `docker-compose up -d --build` (to build the image and start the bot)
 
+NOTE: if you're running the container on Raspbian, use this command instead: `docker-compose up -f docker-compose-raspbian.yaml -d --build`
+
 If you want to shut it down, simply run: `docker-compose down`.
 
 ### Use as javascript package

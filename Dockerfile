@@ -1,4 +1,4 @@
-FROM node:14-alpine as installer
+FROM node:17.1.0-alpine3.12 as installer
 
 WORKDIR /app
 
@@ -6,7 +6,7 @@ COPY package.json .
 
 RUN npm install
 
-FROM node:14-alpine as runner
+FROM node:17.1.0-alpine3.12 as runner
 
 WORKDIR /app
 
