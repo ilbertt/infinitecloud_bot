@@ -18,10 +18,10 @@ module.exports.getFileExtension = async (ctx, fileType) => {
             return '.jpg';
         case 'document':
             fileId = ctx.message.document.file_id;
-            fileInfo = await ctx.telegram.getFile(fileId);
             extension = '';
-            if (fileInfo.file_path.includes('.')) {
-                extension = '.'+fileInfo.file_path.split('.').pop();
+            if (ctx.message.document.file_name.includes('.')) {
+                const fileNameSplit = ctx.message.document.file_name.split('.');
+                extension = '.' + fileNameSplit[fileNameSplit.length - 1];
             }
             return extension;
         case 'video':
