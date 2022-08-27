@@ -20,7 +20,7 @@ module.exports.getFileExtension = async (ctx, fileType) => {
             fileId = ctx.message.document.file_id;
             extension = '';
             if (ctx.message.document.file_name.includes('.')) {
-                let fileNameSplit = ctx.message.document.file_name.split('.');
+                const fileNameSplit = ctx.message.document.file_name.split('.');
                 extension = '.' + fileNameSplit[fileNameSplit.length - 1];
             }
             return extension;
