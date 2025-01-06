@@ -1,4 +1,7 @@
 # Infinite Cloud Bot
+
+> NOTE: this repo has been archived. The new version of the bot is available at https://github.com/ilbertt/ic_infinitecloud_bot.
+
 As Telegram offers unlimited cloud storage, it lacks of the main characteristics of the cloud services: folders structure, file names, etc.
 Here comes the [Infinite Cloud Bot](https://t.me/infinitecloud_bot)! This bot simply keeps track of your files using a `json` file as the "filesystem", _without saving anything outside of the chat_ and so preserving your privacy.
 
